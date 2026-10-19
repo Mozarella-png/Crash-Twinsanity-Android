@@ -17,3 +17,6 @@ Corrección de CI (v3): se quita android-actions/setup-android@v3 (falla en la i
 
 Ícono y nombre (v4): android/overlay/res/ con el ícono de Crash en todas las densidades; assemble.sh lo instala, fija el
 ícono y la etiqueta en el manifest y quita el ícono adaptativo de la plantilla.
+
+Fase C (primer APK, v5): libmain.so de prueba (android/native/stub_main.c: ventana SDL3 amarilla) y la capa táctil
+compilada con el NDK por Android.mk (generado por assemble.sh). jni/SDL enlaza con SDL3 en el build. minSdk 24 y arm64.

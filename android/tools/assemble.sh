@@ -45,4 +45,40 @@ text = re.sub(r'android:label="[^"]*"', 'android:label="@string/app_name"', text
 open(path, "w", encoding="utf-8").write(text)
 PYEOF
 
+# The native build: the template's jni/SDL is SDL3's source (its Android.mk builds SDL3); jni/src holds our module
+JNI="$APP/jni"
+ln -sfn "$OUT/SDL" "$JNI/SDL"
+mkdir -p "$JNI/src"
+cp "$ROOT/android/native/stub_main.c" "$JNI/src/stub_main.c"
+cat > "$JNI/src/Android.mk" <<'MK'
+LOCAL_PATH := $(call my-dir)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := main
+
+# The stub (android/native) until the game builds for Android; the touch bridge (src/platform/native/touch) is the game's
+# own code and is built from the repo, so its JNI functions exist in libmain.so
+LOCAL_SRC_FILES := stub_main.c \
+    @ROOT@/src/platform/native/touch/touchpad.cpp
+
+LOCAL_C_INCLUDES := @OUT@/SDL/include @ROOT@/src/platform/native
+
+LOCAL_SHARED_LIBRARIES := SDL3
+
+LOCAL_LDLIBS := -llog -landroid
+
+include $(BUILD_SHARED_LIBRARY)
+MK
+sed -i "s|@ROOT@|$ROOT|g; s|@OUT@|$OUT|g" "$JNI/src/Android.mk"
+# The template's Application.mk: a 64-bit ABI and the same API level as the app (Android 5.0 and up)
+cat > "$JNI/Application.mk" <<'APP'
+APP_ABI := arm64-v8a
+APP_PLATFORM := android-24
+APP_STL := c++_static
+APP
+
+# minSdk and the NDK's platform level in the template's build.gradle
+sed -i 's/minSdkVersion [0-9]*/minSdkVersion 24/; s/android-19/android-24/g; s/android-16/android-24/g' "$APP/build.gradle"
+
 echo "Android project ready in $OUT/project"
