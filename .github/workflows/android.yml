@@ -1,0 +1,46 @@
+name: Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  apk:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r27c
+
+      - name: Install glslang (shader check)
+        run: sudo apt-get install -y glslang-tools
+
+      - name: Check the renderer's GLSL for GLES
+        run: python3 android/tools/check_shaders.py glslangValidator
+
+      - name: Assemble the Android project
+        run: bash android/tools/assemble.sh
+
+      # TODO (not in this version): the native library. The game's sources and the touch bridge (src/platform/native/touch)
+      # must be built into libmain.so for the NDK's ABIs, and the game data must come from the player's own disc at run time.
+
+      - name: Build the APK
+        working-directory: android/build/project
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: crash-twinsanity-debug-apk
+          path: android/build/project/app/build/outputs/apk/debug/*.apk

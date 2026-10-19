@@ -1,0 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Fredoka:wght@500;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1280px;height:720px;overflow:hidden}
+.crash{font-family:'Luckiest Guy',cursive;letter-spacing:1px;color:#ff9a1f;-webkit-text-stroke:2px #3a1200;paint-order:stroke fill;text-shadow:0 4px 0 #3a1200,0 6px 10px rgba(0,0,0,.45)}
+.body{font-family:'Fredoka',sans-serif;font-weight:600}
+.key{display:inline-flex;align-items:center;justify-content:center;min-width:44px;height:34px;padding:0 10px;border-radius:8px;background:linear-gradient(#fdfdfd,#cfd6e3);border:2px solid #1b2340;box-shadow:0 4px 0 #1b2340;font-family:'Fredoka';font-weight:700;font-size:15px;color:#1b2340;margin-right:8px}
+.prompt{display:inline-flex;align-items:center;margin-left:34px;font-family:'Fredoka';font-weight:600;font-size:19px;color:#fff;text-shadow:0 2px 0 #000}

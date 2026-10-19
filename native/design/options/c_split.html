@@ -1,0 +1,36 @@
+<html><head><link rel="stylesheet" href="common.css"><style>
+body{background:linear-gradient(135deg,#0e5fb8 0%,#0a3b7a 55%,#071f45 100%)}
+.swirl{position:absolute;left:-380px;top:-300px;width:1300px;height:1300px;background:url(spiral_grey.svg);background-size:cover;opacity:.7}
+.ring{position:absolute;left:-220px;top:140px;width:640px;height:640px;border-radius:50%;background:repeating-radial-gradient(circle,#e8eef6 0 70px,#1676d2 70px 140px);opacity:.18}
+.title{position:absolute;left:64px;top:40px;font-size:66px}
+.sub{position:absolute;left:68px;top:118px;font-family:'Fredoka';font-weight:600;font-size:18px;color:#bcd9ff;letter-spacing:3px}
+.tabs{position:absolute;left:60px;top:170px;display:flex;flex-direction:column;gap:10px}
+.tab{width:250px;font-family:'Luckiest Guy';font-size:26px;letter-spacing:1px;color:#dbe9ff;padding:12px 24px;border-radius:16px;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.15)}
+.tab.on{background:#fff;color:#ff8a00;-webkit-text-stroke:1.2px #4a1800;paint-order:stroke fill;border-color:#fff;box-shadow:0 6px 0 #ffb43a}
+.panel{position:absolute;left:360px;top:170px;width:860px;height:420px;border-radius:22px;background:#fff;box-shadow:0 10px 0 #ffb43a,0 26px 50px rgba(0,0,0,.4);padding:16px 18px;overflow:hidden}
+.row{display:flex;align-items:center;height:48px;padding:0 22px;border-radius:12px;font-family:'Fredoka';font-weight:600;font-size:21px;color:#173a6b}
+.row+.row{border-top:2px solid #eef3fa}
+.row .v{margin-left:auto;display:flex;align-items:center;gap:14px;min-width:280px;justify-content:center;color:#1b6fd0}
+.pill{padding:4px 18px;border-radius:20px;background:#eaf2ff}
+.row.on{background:#ff9a1f;color:#fff;border-top-color:transparent}
+.row.on .v{color:#fff}.row.on .pill{background:rgba(255,255,255,.25)}
+.ar{color:#ff9a1f;font-weight:700}.row.on .ar{color:#fff}
+.desc{position:absolute;left:360px;top:612px;font-family:'Fredoka';font-weight:600;font-size:19px;color:#d6e8ff}
+.foot{position:absolute;left:0;right:0;bottom:0;height:58px;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:flex-end;padding-right:60px}
+</style></head><body>
+<div class="ring"></div><div class="swirl"></div>
+<div class="title crash">OPTIONS</div><div class="sub">CRASH TWINSANITY</div>
+<div class="tabs"><div class="tab">Gameplay</div><div class="tab on">Display</div><div class="tab">Audio</div><div class="tab">Controls</div><div class="tab">Accessibility</div></div>
+<div class="panel">
+<div class="row"><span>Display mode</span><span class="v"><span class="ar">‹</span><span class="pill">Window</span><span class="ar">›</span></span></div>
+<div class="row"><span>Window size</span><span class="v"><span class="ar">‹</span><span class="pill">1280 × 960</span><span class="ar">›</span></span></div>
+<div class="row on"><span>Resolution</span><span class="v"><span class="ar">‹</span><span class="pill">2×  ·  1280 × 1024</span><span class="ar">›</span></span></div>
+<div class="row"><span>Widescreen</span><span class="v"><span class="ar">‹</span><span class="pill">16:9</span><span class="ar">›</span></span></div>
+<div class="row"><span>Refresh rate</span><span class="v"><span class="ar">‹</span><span class="pill">60 Hz</span><span class="ar">›</span></span></div>
+<div class="row"><span>Texture pack</span><span class="v"><span class="ar">‹</span><span class="pill">On</span><span class="ar">›</span></span></div>
+<div class="row"><span>Anti-aliasing</span><span class="v"><span class="ar">‹</span><span class="pill">FXAA</span><span class="ar">›</span></span></div>
+<div class="row"><span>V-sync</span><span class="v"><span class="ar">‹</span><span class="pill">On</span><span class="ar">›</span></span></div>
+</div>
+<div class="desc">Renders the 3D at a higher resolution for a sharper picture.</div>
+<div class="foot"><span class="prompt"><span class="key">Q</span><span class="key">E</span>Tabs</span><span class="prompt"><span class="key">ENTER</span>Select</span><span class="prompt"><span class="key">ESC</span>Back</span></div>
+</body></html>

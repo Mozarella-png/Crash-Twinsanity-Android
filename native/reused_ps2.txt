@@ -1,0 +1,8 @@
+# The decomp's PS2 platform files the native build compiles as they are (the retail C library's and maths' C++, kept for their
+# exact results). native/CMakeLists.txt and native/tools/data_types.py read this list
+src/platform/ps2/libm.cpp
+src/platform/ps2/libc.cpp
+src/platform/ps2/saves.cpp
+src/platform/ps2/audio.cpp
+src/platform/ps2/multistream/commands.cpp
+src/platform/ps2/multistream/streams.cpp

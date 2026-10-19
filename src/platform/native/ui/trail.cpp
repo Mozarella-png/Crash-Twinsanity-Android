@@ -1,0 +1,148 @@
+// The game's trail in the log, for bug reports: always the game's states as they change (by name, with where the player is), the
+// chunk the player is in and the chunk a level loads at; with the detailed log (Options > Gameplay, or $TWIN_DETAILED_LOG) also
+// where the player is every 5 s of play, every sound played (game/sound.cpp) and every file looked up on the disc (disc.cpp)
+#include "ui/bindings.h"
+#include "ui/nativeui.h"
+
+#include "native.h"
+
+#include "game/chunkdata.h"
+#include "game/gamecontroller.h"
+#include "game/instances.h"
+#include "game/place.h"
+#include "game/player.h"
+#include "game/reference.h"
+#include "game/sound.h"
+
+#include <chrono>
+#include <cstdio>
+#include <cstdlib>
+#include <string>
+
+namespace
+{
+using Clock = std::chrono::steady_clock;
+
+const char* StateName(u32 state)
+{
+    static const char* const Names[] = {
+        "waiting for the loader", "starting",          "waiting for a pad",   "checking the memory card", "the Vivendi logo",
+        "the Traveller's Tales logo", "loading the title", "the title",        "the main menu",            "loading a level",
+        "a new game",             "starting play",     "playing",             "a cutscene",               "a movie",
+        "paused",                 "the gallery",       "waiting",             "game over",                "the credits",
+        "back to the title",      "fading out",        "restarting",
+    };
+    return state < sizeof(Names) / sizeof(Names[0]) ? Names[state] : "?";
+}
+
+// The player's instance while it's made (none between levels)
+InstanceContext* Player()
+{
+    if (g_PlayerInstance == nullptr || g_PlayerInstance->object == nullptr)
+    {
+        return nullptr;
+    }
+
+    auto* player = static_cast<InstanceContext*>(g_PlayerInstance->object);
+    return InstanceLive(player) && player->place != nullptr ? player : nullptr;
+}
+
+// " at (x, y, z)" of the player (its matrix's or its position, whichever is newer: nothing of the game's is changed), or nothing
+std::string Where(InstanceContext* player)
+{
+    if (player == nullptr)
+    {
+        return {};
+    }
+
+    const ObjectPlace* place = player->place;
+    Vector4 position = place->position;
+    if ((place->bits.value & PlaceBits::MatrixMoved) != 0)
+    {
+        position = {place->matrix.m[3][0], place->matrix.m[3][1], place->matrix.m[3][2], 1.0f};
+    }
+
+    char text[64];
+    std::snprintf(text, sizeof(text), " at (%.1f, %.1f, %.1f)", position.x, position.y, position.z);
+    return text;
+}
+}
+
+bool Native::DetailedLog()
+{
+    static const bool asked = std::getenv("TWIN_DETAILED_LOG") != nullptr;
+    return asked || NativeUi::IsOn(NativeUi::OptionDetailedLog);
+}
+
+void NativeUi::TrailFrame()
+{
+    GameController* controller = G_GameController;
+    if (controller == nullptr)
+    {
+        return;
+    }
+
+    static u32 lastState = ~0u;
+    static std::string lastChunk;
+    static Clock::time_point lastPlace = Clock::now();
+    u32 state = controller->State();
+    InstanceContext* player = Player();
+    if (state != lastState)
+    {
+        Native::Log("game: %s (state %u)%s", StateName(state), state, Where(player).c_str());
+        if (state == GameController::StateLoadingLevel && controller->progress.startChunk.string != nullptr)
+        {
+            Native::Log("game: loading at %s", controller->progress.startChunk.string);
+        }
+
+        lastState = state;
+    }
+
+    ChunkData* chunk = player != nullptr ? player->chunk : nullptr;
+    const char* name = chunk != nullptr ? chunk->name.string : nullptr;
+    if (name != nullptr && lastChunk != name)
+    {
+        lastChunk = name;
+        Native::Log("game: the player in %s%s", name, Where(player).c_str());
+    }
+
+    Clock::time_point now = Clock::now();
+    // $TWIN_TEST_SOUND=0xae,0x63: those sounds played (as the game plays one, unplaced) every 3 s of play from 5 s in (the
+    // sound's tests)
+    static const char* testSounds = std::getenv("TWIN_TEST_SOUND");
+    static Clock::time_point playing{};
+    static Clock::time_point lastTest{};
+    if (testSounds != nullptr && state == GameController::StatePlaying)
+    {
+        if (playing == Clock::time_point{})
+        {
+            playing = now;
+        }
+
+        // ($TWIN_TEST_SOUND_DELAY: from so many seconds of play instead)
+        static const s32 delay = std::getenv("TWIN_TEST_SOUND_DELAY") != nullptr ? std::atoi(std::getenv("TWIN_TEST_SOUND_DELAY")) : 5;
+        if (now - playing >= std::chrono::seconds(delay) && now - lastTest >= std::chrono::seconds(3))
+        {
+            lastTest = now;
+            for (const char* at = testSounds; *at != '\0';)
+            {
+                char* end = nullptr;
+                u32 id = static_cast<u32>(std::strtoul(at, &end, 0));
+                if (end == at)
+                {
+                    break;
+                }
+
+                u32 channel = PlaySoundById(1.0f, -1.0f, id, 0, ListenerVoiceKind(), -1);
+                Native::Log("test sound: %#x played (%#x)", id, channel);
+                at = *end == ',' ? end + 1 : end;
+            }
+        }
+    }
+
+    if (Native::DetailedLog() && state == GameController::StatePlaying && now - lastPlace >= std::chrono::seconds(5))
+    {
+        lastPlace = now;
+        Native::Log("game: the player%s in %s", Where(player).c_str(), name != nullptr ? name : "?");
+    }
+}

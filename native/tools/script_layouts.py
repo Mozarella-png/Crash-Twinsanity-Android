@@ -1,0 +1,163 @@
+#!/usr/bin/env python3
+"""The script commands' arguments as the files have them, for the native build: build/native/scriptlayouts.cpp.
+
+A command's arguments are stored in the RM2 as the PS2's object past its ScriptCommand header (ReadCommand reads them in raw:
+src/game/agentlab.cpp). The header is 12 bytes on the PS2 and 24 natively (two pointers), and a class with pointers or 16 byte
+members lays the rest out differently, so natively each command reads the PS2's bytes for its arguments and every member is put
+where the native class has it. The classes come from clang's record layouts of both targets (native/tools/convert_data.py's), a
+class known by its Size function (its vtable's SizeSlot), the way ReadCommand finds a command's size.
+
+    native/tools/script_layouts.py
+"""
+import re, sys
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).parent))
+import convert_data as cd
+
+BASE = "ScriptCommand"
+
+
+def size_labels():
+    """{Size function's retail label: class} from the headers' declarations"""
+    found = {}
+    for path in (HERE / "include" / "game").glob("*.h"):
+        text = path.read_text(errors="ignore")
+        classes = [(m.start(), m.group(2)) for m in re.finditer(r"\b(class|struct)\s+(\w+)\s*(?:final\s*)?:\s*(?:public\s+)?\w+", text)]
+        for m in re.finditer(r"u32\s+Size\(\)\s*(?:const\s*)?RETAIL\((\w+)\)", text):
+            owner = [name for start, name in classes if start < m.start()]
+            if owner:
+                found[m.group(1)] = owner[-1]
+    return found
+
+
+def record(layouts, name):
+    for key in (f"class {name}", f"struct {name}", name):
+        if key in layouts:
+            return layouts[key]
+    return None
+
+
+def flatten(types, cls, pf, nf, ps2_base, native_base, fields):
+    """The members' places (PS2, native) and sizes, a member that holds pointers inside it taken member by member"""
+    if len(pf) != len(nf):
+        raise ValueError(f"{cls}: {len(pf)} members on the PS2, {len(nf)} natively")
+    for (po, pbits, _, pbody), (no, nbits, _, nbody) in zip(pf, nf):
+        ftype = cd.split_field(pbody)[0]
+        po, no = ps2_base + po, native_base + no
+        if pbits:
+            # A bitfield's storage word (the same both ways), once
+            if not fields or fields[-1][0] != po:
+                fields.append((po, no, 4, 4))
+            continue
+        try:
+            ps2_bytes, native_bytes, _, _ = types.sizes(ftype)
+        except KeyError:
+            raise ValueError(f"{cls}: no layout for member type {ftype!r}")
+        parsed = types.parse(ftype)
+        if parsed[0] == "record" and types.has_pointers(ftype):
+            inner_p = [f for f in parsed[1]["fields"] if f[2] == 1 and "(base)" not in f[3]]
+            inner_n = [f for f in parsed[2]["fields"] if f[2] == 1 and "(base)" not in f[3]]
+            flatten(types, cls, inner_p, inner_n, po, no, fields)
+        elif parsed[0] == "array" and types.has_pointers(parsed[1]) and parsed[2]:
+            es, en, _, _ = types.sizes(parsed[1])
+            inner = types.parse(parsed[1])
+            for index in range(parsed[2]):
+                if inner[0] == "record":
+                    flatten(types, cls, [f for f in inner[1]["fields"] if f[2] == 1 and "(base)" not in f[3]],
+                            [f for f in inner[2]["fields"] if f[2] == 1 and "(base)" not in f[3]],
+                            po + index * es, no + index * en, fields)
+                else:
+                    fields.append((po + index * es, no + index * en, es, en))
+        else:
+            fields.append((po, no, ps2_bytes, native_bytes))
+
+
+def main():
+    ps2, native = cd.dump_layouts("ps2"), cd.dump_layouts("native")
+    for layouts in (ps2, native):
+        for name, layout in layouts.items():
+            layout["union"] = name.startswith("union ")
+    types = cd.Types(ps2, native)
+    header_ps2, header_native = record(ps2, BASE)["size"], record(native, BASE)["size"]
+    entries, problems = [], []
+    for label, cls in sorted(size_labels().items()):
+        p, n = record(ps2, cls), record(native, cls)
+        if p is None or n is None:
+            problems.append(f"{cls} ({label}): no layout")
+            continue
+        # Only the commands (a class with its own Size elsewhere, a condition's, reads its own way)
+        if not any(re.search(rf"\b{BASE} \(base\)", f[3]) for f in p["fields"]):
+            continue
+        fields = []
+        pf = [f for f in p["fields"] if f[2] == 1 and "(base)" not in f[3]]
+        nf = [f for f in n["fields"] if f[2] == 1 and "(base)" not in f[3]]
+        if len(pf) != len(nf):
+            problems.append(f"{cls}: {len(pf)} members on the PS2, {len(nf)} natively")
+            continue
+        try:
+            flatten(types, cls, pf, nf, 0, 0, fields)
+        except ValueError as error:
+            problems.append(str(error))
+            continue
+        entries.append((label, cls, p["size"] - header_ps2, fields))
+
+    lines = ["// Generated by native/tools/script_layouts.py: don't edit", '#include "common.h"', "",
+             "#ifdef __APPLE__", '#define SYMBOL(name) "_" name', "#else", "#define SYMBOL(name) name", "#endif", "",
+             "namespace", "{", "struct Member", "{", "    u16 ps2;", "    u16 native;", "    u16 ps2Bytes;", "    u16 nativeBytes;",
+             "};", "", "struct Layout", "{", "    const void* size;", "    u32 ps2Bytes;", "    u32 count;", "    const Member* members;",
+             "};", "}", "", 'extern "C"', "{"]
+    for label, *_ in entries:
+        lines.append(f'void {label}() asm(SYMBOL("{label}"));')
+    lines.append("}\n\nnamespace\n{")
+    for i, (label, cls, payload, fields) in enumerate(entries):
+        members = ", ".join(f"{{{po}, {no}, {pb}, {nb}}}" for po, no, pb, nb in fields)
+        lines.append(f"// {cls}\nconst Member g_Members{i}[] = {{{members if members else '{0, 0, 0, 0}'}}};")
+    lines.append("const Layout g_Layouts[] = {")
+    for i, (label, cls, payload, fields) in enumerate(entries):
+        lines.append(f"    {{reinterpret_cast<const void*>(&{label}), {payload}, {len(fields)}, g_Members{i}}},")
+    lines.append("};\n}\n")
+    lines.append(f"""// The arguments of a command whose Size function is size, read as the PS2's bytes past its {header_ps2} byte header into the
+// native object's members. False when the class isn't known (the caller reads as the PS2 does)
+bool NativeScriptCommandArguments(const void* size, const u8* ps2Bytes, u8* command, u32* ps2Count)
+{{
+    for (const Layout& layout : g_Layouts)
+    {{
+        if (layout.size != size)
+        {{
+            continue;
+        }}
+
+        if (ps2Bytes == nullptr)
+        {{
+            *ps2Count = layout.ps2Bytes;
+            return true;
+        }}
+
+        for (u32 i = 0; i < layout.count; i++)
+        {{
+            const Member& member = layout.members[i];
+            const u8* from = ps2Bytes + (member.ps2 - {header_ps2});
+            u8* to = command + member.native;
+            // A pointer member: the PS2's 32 bits widened (what the file has there is never an address of this machine)
+            __builtin_memset(to, 0, member.nativeBytes);
+            __builtin_memcpy(to, from, member.ps2Bytes < member.nativeBytes ? member.ps2Bytes : member.nativeBytes);
+        }}
+
+        return true;
+    }}
+
+    return false;
+}}""")
+    out = HERE / "build" / "native" / "scriptlayouts.cpp"
+    out.write_text("\n".join(lines) + "\n")
+    print(f"{out.relative_to(HERE)}: {len(entries)} command classes", file=sys.stderr)
+    for problem in problems:
+        print("PROBLEM", problem, file=sys.stderr)
+    if problems:
+        sys.exit(f"{len(problems)} problems")
+
+
+if __name__ == "__main__":
+    main()
