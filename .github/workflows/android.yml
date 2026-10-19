@@ -11,12 +11,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
-      - uses: android-actions/setup-android@v3
+      # The Android SDK is preinstalled on the ubuntu-24.04 runners (ANDROID_HOME); android-actions/setup-android@v3 fails
+      # there (sdkmanager 'tools' no longer exists), so it's not used.
 
       - uses: nttld/setup-ndk@v1
         with:

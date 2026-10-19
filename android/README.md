@@ -38,3 +38,7 @@ Estado de esta versión (v1). Lo que está y lo que falta, para no confundirlo c
 
 **Probar el overlay en el Poco X8 Pro Max**: cuando el build nativo esté listo, instalar el APK, entrar en partida y pulsar
 "Editar" para ajustar los controles.
+
+**Nombre e ícono**: la app se llama "Crash Twinsanity" (`app_name` en `strings.xml`). El ícono del launcher está en
+`android/overlay/res/mipmap-*/ic_launcher.png` (512 px original en `res/store/`), y `assemble.sh` lo copia al proyecto y
+quita el ícono adaptativo de la plantilla.
