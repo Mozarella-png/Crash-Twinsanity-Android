@@ -174,10 +174,12 @@ def dump_layouts(target):
         result = subprocess.run(args + [str(source)], capture_output=True, text=True, cwd=HERE)
         # The layouts come from stdout, but a header that fails to compile stops the probe before its records are laid
         # out, and then they're missing without a word (no Matrix4x4 or Vector4 in the dumps). Say what the compiler said.
-        errors = [l for l in result.stderr.splitlines() if "error:" in l or "fatal error" in l]
-        if errors:
-            print(f"{target}: {len(errors)} compile errors in {source.name}; the first ones:", flush=True)
-            for line in errors[:25]:
+        # A crash (exit 139 = SIGSEGV) leaves clang's stack dump in stderr: the last lines name the function that crashed.
+        # The first errors go too, for the compiler's own complaints.
+        lines = result.stderr.splitlines()
+        if result.returncode != 0 or any("error:" in l for l in lines):
+            print(f"{target}: {source.name} exit {result.returncode}; first errors and the end of stderr:", flush=True)
+            for line in [l for l in lines if "error:" in l][:5] + ["   ..."] + lines[-40:]:
                 print("   ", line[:300], flush=True)
         return result.stdout
 
