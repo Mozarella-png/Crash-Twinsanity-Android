@@ -33,7 +33,7 @@ jobs:
       - name: Get asm/ from the private repo
         uses: actions/checkout@v4
         with:
-          repository: GioPixelGH/crash-twinsanity-private
+          repository: ${{ github.repository_owner }}/crash-twinsanity-private
           token: ${{ secrets.PRIVATE_REPO_TOKEN }}
           path: private
 

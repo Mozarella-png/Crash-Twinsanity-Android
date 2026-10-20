@@ -26,3 +26,5 @@ TWINSANITY_ISO; SettingsFolder usa TWIN_SETTINGS_DIR en Android (android_glue.cp
 Pendiente: data.cpp (ver android/README.md).
 
 Fase B (v7): generación de data.cpp en CI (android/tools/gen_data.sh) con asm/ desde un repo privado; paso en el workflow.
+
+v8: el repo privado se toma del dueño del repo principal (github.repository_owner), no de un nombre fijo.

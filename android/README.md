@@ -45,7 +45,7 @@ quita el ícono adaptativo de la plantilla.
 
 **Datos del juego en CI (fase B, opción 2)**
 
-- Repo privado `GioPixelGH/crash-twinsanity-private` con `asm/` (el split del ejecutable del PAL, hecho con
+- Repo privado `<tu-usuario>/crash-twinsanity-private` (el mismo dueño que el repo principal) con `asm/` (el split del ejecutable del PAL, hecho con
   `tools/split.py` en tu PC). Nada de eso va al repo público.
 - En el repo principal: secret `PRIVATE_REPO_TOKEN` con un token de solo lectura de ese repo privado.
 - El workflow copia `asm/`, instala las cabeceras de PS2 y ejecuta `android/tools/gen_data.sh`, que genera
