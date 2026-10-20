@@ -42,3 +42,6 @@ anónimo). CI: glslang (nombre del binario de Ubuntu), apt-get update, y el ensa
 (necesita las cabeceras de SDL).
 
 v13: convert_data.py imprime cuántos layouts da cada target y cuáles tienen nombres de Matrix/Vector (diagnóstico de Matrix4x4).
+
+v14: convert_data.py: el probe fuerza el layout de cada registro de las cabeceras (sizeof), porque clang solo vuelca los
+layouts que se usan; antes faltaban incluso Vector4 (147/199 layouts). Sin probar con clang: el g++ del probe compila (0 errores).

@@ -119,9 +119,25 @@ def toolchain_includes():
     return tuple(a for d in dirs if not d.endswith(("15.2.0/include", "include-fixed")) for a in ("-isystem", d))
 
 def probe_source():
-    """Every header, and the .cpp files' own types too: the probe includes each .cpp's types by compiling the .cpp files"""
-    headers = sorted(p.relative_to(HERE / "include").as_posix() for p in (HERE / "include").rglob("*.h"))
-    return "".join(f'#include "{h}"\n' for h in headers)
+    """Every header, and a sizeof of each record defined in them: clang lays a record out (and dumps it) only once something
+    needs its layout, so a header's records that nothing uses would otherwise never appear in the dumps. Class templates and
+    the records in headers with namespaces are left out (their names aren't the global ones; they're laid out by use)."""
+    headers = sorted((p for p in (HERE / "include").rglob("*.h")), key=lambda p: p.as_posix())
+    text = "".join(f'#include "{h.relative_to(HERE / "include").as_posix()}"\n' for h in headers)
+    names = set()
+    definition = re.compile(r"^(?:struct|class)(?:\s+alignas\([^)]*\))?\s+(\w+)(?![\w:])[^;\n]*$", re.M)
+    for h in headers:
+        source = h.read_text(encoding="utf-8", errors="ignore")
+        if re.search(r"^namespace\b", source, re.M):
+            continue
+        for m in definition.finditer(source):
+            if "(" in m.group(0):
+                continue
+            before = source[:m.start()].rstrip().splitlines()[-1:]
+            if before and re.search(r"template\s*<", before[0]):
+                continue
+            names.add(m.group(1))
+    return text + "".join(f"static_assert(sizeof({n}) > 0);\n" for n in sorted(names))
 
 def dump_layouts(target):
     """{record name: {"size", "align", "fields": [(offset, bit, depth, type, name)]}} for "native" or "ps2" """
