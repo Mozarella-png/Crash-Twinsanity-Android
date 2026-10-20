@@ -24,7 +24,7 @@ platform = [p for p in platform if p != MOVIE_DECODER] + [MOVIE_OFF]
 
 generated = [os.path.join(ROOT, "build/native", name) for name in
              ["data.cpp", "scriptlayouts.cpp", "vu1programs.cpp", "vu0programs.cpp", "vu0programs_0.cpp", "vu0programs_1.cpp"]
-             + ["vu1programs_%d.cpp" % i for i in range(8)]]
+             + ["vu1programs_%d.cpp" % i for i in range(8)] + ["stubs.cpp"]]
 
 sources = game + core + reused + platform + generated
 for path in sources:

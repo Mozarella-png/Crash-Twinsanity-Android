@@ -41,7 +41,9 @@ python3 native/tools/convert_data.py
 python3 native/tools/script_layouts.py
 python3 native/tools/vu1_translate.py build/native/vu1programs.cpp
 python3 native/tools/vu1_translate.py --vu0 build/native/vu0programs.cpp
-for generated in data.cpp scriptlayouts.cpp vu1programs.cpp vu1programs_7.cpp vu0programs.cpp vu0programs_1.cpp; do
+# The stand-ins for the retail labels nothing defines yet (the desktop build makes them from the objects; see the script)
+python3 android/tools/make_android_stubs.py "$ROOT"
+for generated in data.cpp scriptlayouts.cpp vu1programs.cpp vu1programs_7.cpp vu0programs.cpp vu0programs_1.cpp stubs.cpp; do
     [ -s "build/native/$generated" ] || { echo "build/native/$generated wasn't made" >&2; exit 1; }
 done
 ls -l build/native/*.cpp
