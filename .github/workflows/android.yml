@@ -43,12 +43,26 @@ jobs:
           cp -r private/assets ./assets
           cp private/SLES_525.68 ./SLES_525.68
 
-      - name: Install the PS2 toolchain's headers
+      - name: Install the PS2 toolchain
         run: |
           curl -fsSL -o ps2dev.tar.gz https://github.com/ps2dev/ps2dev/releases/download/latest/ps2dev-ubuntu-latest.tar.gz
           sudo mkdir -p /opt/ps2dev
           sudo tar -xzf ps2dev.tar.gz -C /opt/ps2dev
-          echo "PS2DEV=/opt/ps2dev" >> "$GITHUB_ENV"
+          # The compiler's folder is the toolchain's root (ee/bin/..., ps2sdk/...); find it wherever the archive put it
+          gxx=$(find /opt/ps2dev -path '*/ee/bin/mips64r5900el-ps2-elf-g++' -print -quit)
+          if [ -z "$gxx" ]; then
+            echo "The archive has no EE compiler (ee/bin/mips64r5900el-ps2-elf-g++). What it has:"
+            find /opt/ps2dev -maxdepth 4 | head -80
+            exit 1
+          fi
+          root=$(dirname "$(dirname "$(dirname "$gxx")")")
+          if [ ! -d "$root/ps2sdk" ]; then
+            echo "The toolchain at $root has no ps2sdk/. What it has:"
+            find "$root" -maxdepth 2 | head -80
+            exit 1
+          fi
+          echo "PS2DEV=$root" >> "$GITHUB_ENV"
+          echo "PS2 toolchain at $root"
 
       - name: Convert the game's data for Android
         run: bash android/tools/gen_data.sh

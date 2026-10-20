@@ -30,3 +30,5 @@ Fase B (v7): generación de data.cpp en CI (android/tools/gen_data.sh) con asm/ 
 v8: el repo privado se toma del dueño del repo principal (github.repository_owner), no de un nombre fijo.
 
 v9: el conversor necesita también assets/ y SLES_525.68 (además de asm/); el workflow los copia del repo privado.
+
+v10: el paso del toolchain de PS2 busca el compilador dentro del tarball y fija PS2DEV a su raíz (con ps2sdk/).
