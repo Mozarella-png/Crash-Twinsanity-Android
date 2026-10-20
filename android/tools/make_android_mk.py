@@ -35,7 +35,7 @@ for path in sources:
 def rel(path):
     return os.path.relpath(path, JNI_SRC).replace(os.sep, "/")
 
-FLAGS = ("-std=gnu++2c -fno-exceptions -fno-rtti -fno-threadsafe-statics -fno-strict-aliasing -fno-delete-null-pointer-checks "
+FLAGS = ("-O2 -DNDEBUG -std=gnu++2c -fno-exceptions -fno-rtti -fno-threadsafe-statics -fno-strict-aliasing -fno-delete-null-pointer-checks "
          "-fwrapv -ffp-contract=off -Wall -Wno-invalid-offsetof -Wno-unused-variable -Wno-unused-function "
          "-Wno-unused-but-set-variable -Wno-unknown-pragmas -Wno-missing-braces -Wno-mismatched-tags -DTWIN_NATIVE -DTWIN_GLES")
 
