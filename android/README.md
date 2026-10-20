@@ -45,8 +45,9 @@ quita el ícono adaptativo de la plantilla.
 
 **Datos del juego en CI (fase B, opción 2)**
 
-- Repo privado `<tu-usuario>/crash-twinsanity-private` (el mismo dueño que el repo principal) con `asm/` (el split del ejecutable del PAL, hecho con
-  `tools/split.py` en tu PC). Nada de eso va al repo público.
+- Repo privado `<tu-usuario>/crash-twinsanity-private` (el mismo dueño que el repo principal) con, en su raíz, `asm/`,
+  `assets/` y `SLES_525.68` (el split y el ejecutable del PAL, de tu PC). Tiene que ser privado: contiene el ejecutable del
+  juego. Nada de eso va al repo público.
 - En el repo principal: secret `PRIVATE_REPO_TOKEN` con un token de solo lectura de ese repo privado.
 - El workflow copia `asm/`, instala las cabeceras de PS2 y ejecuta `android/tools/gen_data.sh`, que genera
   `build/native/data.cpp` con el clang del NDK para arm64. Sin probar todavía.

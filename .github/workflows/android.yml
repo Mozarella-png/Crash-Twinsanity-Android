@@ -29,7 +29,7 @@ jobs:
       - name: Check the renderer's GLSL for GLES
         run: python3 android/tools/check_shaders.py glslangValidator
 
-      # The game's data: asm/ (the split of the disc's executable) lives in a private repo, with a token that can read it
+      # The game's data: asm/, assets/ and the executable (the split of the disc) live in a private repo, with a token that can read it
       - name: Get asm/ from the private repo
         uses: actions/checkout@v4
         with:
@@ -37,8 +37,11 @@ jobs:
           token: ${{ secrets.PRIVATE_REPO_TOKEN }}
           path: private
 
-      - name: Copy asm/ into the repo
-        run: cp -r private/asm ./asm
+      - name: Copy the game's split into the repo
+        run: |
+          cp -r private/asm ./asm
+          cp -r private/assets ./assets
+          cp private/SLES_525.68 ./SLES_525.68
 
       - name: Install the PS2 toolchain's headers
         run: |

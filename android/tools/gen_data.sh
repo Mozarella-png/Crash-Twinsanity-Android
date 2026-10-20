@@ -7,10 +7,12 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 API="${ANDROID_API:-24}"
 
-if [ ! -d "$ROOT/asm/data" ]; then
-    echo "asm/data is missing: copy asm/ from the private repo into the repo root first" >&2
-    exit 1
-fi
+for needed in "asm/data" "assets/vutext.textbin.bin" "SLES_525.68"; do
+    if [ ! -e "$ROOT/$needed" ]; then
+        echo "$needed is missing: the private repo must have asm/, assets/ and SLES_525.68 at its root" >&2
+        exit 1
+    fi
+done
 NDK="${ANDROID_NDK_HOME:-${ANDROID_NDK_LATEST_HOME:-}}"
 if [ -z "$NDK" ]; then
     echo "The NDK isn't set (ANDROID_NDK_HOME)" >&2

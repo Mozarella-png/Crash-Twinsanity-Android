@@ -28,3 +28,5 @@ Pendiente: data.cpp (ver android/README.md).
 Fase B (v7): generación de data.cpp en CI (android/tools/gen_data.sh) con asm/ desde un repo privado; paso en el workflow.
 
 v8: el repo privado se toma del dueño del repo principal (github.repository_owner), no de un nombre fijo.
+
+v9: el conversor necesita también assets/ y SLES_525.68 (además de asm/); el workflow los copia del repo privado.
