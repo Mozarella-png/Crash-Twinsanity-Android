@@ -69,6 +69,15 @@ public class CrashActivity extends SDLActivity {
     protected void onResume() {
         super.onResume();
         hideSystemBars();
+        hideSoon();
+    }
+
+    /**
+     * SDL sets up its own view and flags as the surface comes and goes, and those can land after the calls above. Hiding the
+     * bars once more a moment later keeps them away whichever one ran last.
+     */
+    private void hideSoon() {
+        main.postDelayed(this::hideSystemBars, 500);
     }
 
     /**
@@ -104,6 +113,7 @@ public class CrashActivity extends SDLActivity {
         super.onWindowFocusChanged(hasFocus);
         if (hasFocus) {
             hideSystemBars();
+            hideSoon();
         }
     }
 
