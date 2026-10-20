@@ -20,6 +20,7 @@ jobs:
       # there (sdkmanager 'tools' no longer exists), so it's not used.
 
       - uses: nttld/setup-ndk@v1
+        id: ndk
         with:
           ndk-version: r28c
 
@@ -69,8 +70,14 @@ jobs:
       - name: Assemble the Android project
         run: bash android/tools/assemble.sh
 
+      # gen_data.sh takes the NDK from ANDROID_NDK_HOME. Pass the r28c that setup-ndk just installed explicitly: the
+      # runner's preinstalled 27.3 was the one used before (the log's clang paths), and it's the one that crashes.
       - name: Convert the game's data for Android
-        run: bash android/tools/gen_data.sh
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+        run: |
+          echo "NDK for the data: $ANDROID_NDK_HOME"
+          bash android/tools/gen_data.sh
 
       - name: Build the APK
         working-directory: android/build/project
