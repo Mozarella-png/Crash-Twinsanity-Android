@@ -17,6 +17,21 @@
 #include <sys/ucontext.h>
 #include <unistd.h>
 
+// Bionic (Android) has no backtrace(): the NDK declares execinfo.h without it. On Android the dumps just skip the frames;
+// everywhere else they go to stderr as before.
+#if defined(__ANDROID__)
+static void WriteBacktrace(void** frames, int count)
+{
+    (void)frames;
+    (void)count;
+}
+#else
+static void WriteBacktrace(void** frames, int count)
+{
+    backtrace_symbols_fd(frames, backtrace(frames, count), 2);
+}
+#endif
+
 extern "C"
 {
     alignas(16) u8 g_NativeLowMemory[NativeLowMemoryBytes] = {};
@@ -387,7 +402,7 @@ void OnFault(int signal, siginfo_t* info, void* context)
     }
 #endif
     void* frames[48];
-    backtrace_symbols_fd(frames, backtrace(frames, 48), 2);
+    WriteBacktrace(frames, 48);
     struct sigaction& previous = g_Previous[signal == SIGBUS ? 1 : 0];
     sigaction(signal, &previous, nullptr);
 }
@@ -619,7 +634,7 @@ void OnFault(int signal, siginfo_t* info, void* context)
                                code[6], code[7]);
     ::write(2, message, static_cast<size_t>(length));
     void* frames[48];
-    backtrace_symbols_fd(frames, backtrace(frames, 48), 2);
+    WriteBacktrace(frames, 48);
     sigaction(signal, &g_Previous[signal == SIGBUS ? 1 : 0], nullptr);
 }
 
@@ -688,7 +703,7 @@ void NativeBadFree(void* memory, const void* pages, const void* pagesEnd)
         int length = std::snprintf(message, sizeof(message), "[native] a free of %p, outside the small pages %p-%p, left alone:\n", memory, pages, pagesEnd);
         ::write(2, message, static_cast<size_t>(length));
         void* frames[24];
-        backtrace_symbols_fd(frames, backtrace(frames, 24), 2);
+        WriteBacktrace(frames, 24);
     }
 }
 
@@ -704,7 +719,7 @@ void NativeHeapProblem(const char* what, void* memory)
     int length = std::snprintf(message, sizeof(message), "[native] heap: %s (%p):\n", what, memory);
     ::write(2, message, static_cast<size_t>(length));
     void* frames[16];
-    backtrace_symbols_fd(frames, backtrace(frames, 16), 2);
+    WriteBacktrace(frames, 16);
 }
 #endif
 
