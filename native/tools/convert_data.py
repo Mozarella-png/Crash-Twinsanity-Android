@@ -171,7 +171,15 @@ def dump_layouts(target):
                     + list(toolchain_includes()) + ["-DTWIN_NATIVE", "-Inative/include", "-Iinclude", "-Isrc/platform/native"]
                     + host.host_includes() + ["-fno-exceptions", "-fno-rtti", "-Wno-everything",
                                               "-Xclang", "-fdump-record-layouts-complete"])
-        return subprocess.run(args + [str(source)], capture_output=True, text=True, cwd=HERE).stdout
+        result = subprocess.run(args + [str(source)], capture_output=True, text=True, cwd=HERE)
+        # The layouts come from stdout, but a header that fails to compile stops the probe before its records are laid
+        # out, and then they're missing without a word (no Matrix4x4 or Vector4 in the dumps). Say what the compiler said.
+        errors = [l for l in result.stderr.splitlines() if "error:" in l or "fatal error" in l]
+        if errors:
+            print(f"{target}: {len(errors)} compile errors in {source.name}; the first ones:", flush=True)
+            for line in errors[:25]:
+                print("   ", line[:300], flush=True)
+        return result.stdout
 
     # Each file's layouts kept between runs (native/tools/host.py's FileCache): only the files that changed are laid out again
     files = host.FileCache(f"layouts_{target}_cache", " ".join(base) + " " + " ".join(toolchain_includes() if target == "ps2"
