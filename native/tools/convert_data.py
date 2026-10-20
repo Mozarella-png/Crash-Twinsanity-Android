@@ -214,7 +214,17 @@ def dump_layouts(target):
     # Canary 2 (v18): the standard headers the crashes sit in (type_traits, cstddef), with the layout dump and without it
     std_canary = BUILD / "std_canary.cpp"
     std_canary.write_text("#include <type_traits>\nstruct StdCanary { int a; };\n")
-    no_dump = [a for i, a in enumerate(base) if a != "-fdump-record-layouts-complete" and base[i - 1] != "-Xclang"]
+    # the dump is two arguments, "-Xclang" and "-fdump-record-layouts-complete": both go, or clang reads the next one as the flag's value
+    no_dump = []
+    skip_next = False
+    for a in base:
+        if skip_next:
+            skip_next = False
+            continue
+        if a == "-Xclang" and base[base.index(a) + 1:base.index(a) + 2] == ["-fdump-record-layouts-complete"]:
+            skip_next = True
+            continue
+        no_dump.append(a)
     with_dump = subprocess.run(base + [str(std_canary)], capture_output=True, text=True, cwd=HERE)
     without_dump = subprocess.run(no_dump + [str(std_canary)], capture_output=True, text=True, cwd=HERE)
     print(f"{target}: std canary exit with dump {with_dump.returncode}, without dump {without_dump.returncode}", flush=True)
