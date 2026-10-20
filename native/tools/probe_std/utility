@@ -1,0 +1,13 @@
+// Probe-only stand-in for <utility> (native/tools/convert_data.py): only std::pair, which the game uses as an aggregate.
+#pragma once
+#include <initializer_list>
+
+namespace std
+{
+template <class First, class Second>
+struct pair
+{
+    First first;
+    Second second;
+};
+} // namespace std
