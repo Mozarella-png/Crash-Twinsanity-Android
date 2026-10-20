@@ -33,13 +33,12 @@ struct OptionInfo
 // The defaults, the first start's and the settings' reset alike (DefaultOption): the game as the PS2 had it (no skipping its
 // cutscenes, as it couldn't; its own settings' defaults), at 60 Hz (the NTSC release's rate: 50 judders on a 60 Hz display), with
 // the PC conveniences that change nothing of the game on (fast loading, pausing and muting in the background, the mouse)
-// The phone's start values: 120 Hz (option 2: the game clock still steps 60 times a second, the frames come in between) and the
-// 21:9 widescreen (the picture takes the screen's shape, fixes.cpp). The computer keeps 60 Hz and 16:9.
+// The phone's start values: 60 Hz (the game steps 60 times a second; 120 would repeat frames and judder), and the 21:9
+// widescreen (the picture takes the screen's shape, fixes.cpp). The computer keeps 60 Hz and 16:9.
+constexpr s32 DefaultRefresh60 = 1;
 #if defined(__ANDROID__)
-constexpr s32 DefaultRefresh60 = 2;
 constexpr s32 DefaultUltrawide = 1;
 #else
-constexpr s32 DefaultRefresh60 = 1;
 constexpr s32 DefaultUltrawide = 0;
 #endif
 

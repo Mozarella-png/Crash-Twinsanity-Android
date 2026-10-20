@@ -10,6 +10,26 @@ std::atomic<uint32_t> g_Buttons{0};
 // Bit 31: the stick is held; then the bytes X (bits 8-15) and Y (bits 0-7)
 std::atomic<uint32_t> g_Stick{0};
 std::atomic<bool> g_InPlay{false};
+// The reads left to press Start for (a tap on the title screen)
+std::atomic<uint32_t> g_StartReads{0};
+// The PS2's Start button bit (pads.cpp's ButtonStart)
+constexpr uint32_t ButtonStartBit = 0x800;
+constexpr uint32_t StartPressReads = 4;
+}
+
+void PressStart()
+{
+    g_StartReads.store(StartPressReads, std::memory_order_relaxed);
+}
+
+void ApplyTap(uint32_t* buttons)
+{
+    uint32_t reads = g_StartReads.load(std::memory_order_relaxed);
+    if (reads > 0)
+    {
+        *buttons |= ButtonStartBit;
+        g_StartReads.store(reads - 1, std::memory_order_relaxed);
+    }
 }
 
 void SetState(uint32_t buttons, uint8_t leftX, uint8_t leftY, bool stickActive)

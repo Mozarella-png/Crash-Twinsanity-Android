@@ -71,3 +71,10 @@ NativeGraphicsWindowAspect(), la proporción de la ventana. fixes.cpp: en Androi
 pantalla, entre 16:9 y 21:9 (con la opción ultrawide), así que no hay bordes y no se estira; proyección, vista y ratón usan
 ese mismo valor. ui/options.cpp: en Android, por defecto 120 Hz (refresh_60hz = 2) y ultrawide encendido; en escritorio sigue
 igual. Un options.txt ya guardado conserva sus valores (se restablecen en Ajustes). Sin compilar ni probar en el Poco todavía.
+
+v18 (rendimiento, título, pantalla): ui/options.cpp: por defecto 60 Hz también en Android (con 120 el juego da pasos de 60 y
+repite cuadros; se veía a tirones). Sigue en 21:9. touch/touchpad.{h,cpp} y pads.cpp: un toque en la pantalla de título
+(StateTitle) presiona Start unos cuadros, así que se pulsa "Start" tocando. ui/mouse.cpp: el dedo en título llama a PressStart.
+CrashActivity.java: pantalla completa con WindowInsetsController en Android 11+ (barras ocultas, vuelven solo con un deslizamiento
+del borde y se ocultan otra vez); los botones de volumen cambian el volumen sin el panel del sistema (flags 0).
+Sin compilar ni probar en el Poco todavía.

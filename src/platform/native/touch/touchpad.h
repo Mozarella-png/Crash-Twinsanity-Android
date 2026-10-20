@@ -13,4 +13,7 @@ void SetInPlay(bool inPlay);
 bool InPlay();
 // Adds the overlay's input to the pad's read
 void Apply(uint32_t* buttons, uint8_t* leftX, uint8_t* leftY);
+// A tap on the title screen: presses Start for a few of the pad's reads (the title waits for it). Any state.
+void PressStart();
+void ApplyTap(uint32_t* buttons);
 }

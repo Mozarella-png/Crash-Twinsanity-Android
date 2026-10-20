@@ -18,6 +18,8 @@
 #include "game/menus.h"
 #include "game/renderer.h"
 
+#include "touch/touchpad.h"
+
 #include <SDL3/SDL.h>
 
 #include <atomic>
@@ -256,6 +258,13 @@ bool WatchMouse(void*, SDL_Event* event)
         g_LastMotion = std::chrono::steady_clock::now();
         if (event->type == SDL_EVENT_FINGER_DOWN)
         {
+            // The title screen waits for Start: a tap there is Start
+            GameController* title = G_GameController;
+            if (title != nullptr && title->State() == GameController::StateTitle)
+            {
+                Touch::PressStart();
+            }
+
             if (Capturing())
             {
                 CancelCapture();

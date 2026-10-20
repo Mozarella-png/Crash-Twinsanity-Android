@@ -293,6 +293,8 @@ s32 Platform::Pads::Read(s32 port, s32 slot, u8* data)
     {
         Touch::Apply(&bound.buttons, &bound.leftX, &bound.leftY);
     }
+    // A tap on the title screen presses Start (in and out of play alike)
+    Touch::ApplyTap(&bound.buttons);
     u32 buttons = bound.buttons;
     u8 pressure[PressureReportBytes] = {};
     pressure[PressureL2] = bound.l2Pressure;

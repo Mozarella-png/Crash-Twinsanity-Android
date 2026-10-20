@@ -2,16 +2,21 @@ package com.giopixel.crashtwinsanity;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.media.AudioManager;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.provider.OpenableColumns;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.Toast;
@@ -60,8 +65,31 @@ public class CrashActivity extends SDLActivity {
         }
     }
 
-    /** Immersive full screen: the bars hide, and come back only for a swipe from their edge (then they hide again). */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        hideSystemBars();
+    }
+
+    /**
+     * Immersive full screen: the navigation and status bars hide, and come back only for a swipe from their edge (then they
+     * hide again). Android 11 and up hide them through the window's insets controller; older ones take the flags below.
+     */
     private void hideSystemBars() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            getWindow().setDecorFitsSystemWindows(false);
+            WindowInsetsController controller = getWindow().getInsetsController();
+            if (controller != null) {
+                controller.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                controller.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+            }
+        }
+        getWindow().getDecorView().setOnSystemUiVisibilityChangeListener(visibility -> {
+            // The bars came back (a swipe, a call, the volume panel): hide them again
+            if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
+                main.post(this::hideSystemBars);
+            }
+        });
         getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_FULLSCREEN
                         | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
@@ -189,6 +217,24 @@ public class CrashActivity extends SDLActivity {
 
     private void handOverPaths() {
         NativeBridge.setPaths(discFile().getAbsolutePath(), new File(getFilesDir(), "settings").getAbsolutePath());
+    }
+
+    /**
+     * The volume keys change the game's sound without the system's volume panel (which would sit over the picture with the
+     * navigation buttons): the change is made with no UI, and the keys are taken here.
+     */
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        int code = event.getKeyCode();
+        if (code == KeyEvent.KEYCODE_VOLUME_UP || code == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                AudioManager audio = (AudioManager) getSystemService(AUDIO_SERVICE);
+                audio.adjustStreamVolume(AudioManager.STREAM_MUSIC,
+                        code == KeyEvent.KEYCODE_VOLUME_UP ? AudioManager.ADJUST_RAISE : AudioManager.ADJUST_LOWER, 0);
+            }
+            return true;
+        }
+        return super.dispatchKeyEvent(event);
     }
 
     @Override
