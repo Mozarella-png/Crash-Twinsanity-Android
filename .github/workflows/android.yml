@@ -24,10 +24,12 @@ jobs:
           ndk-version: r27c
 
       - name: Install glslang (shader check)
-        run: sudo apt-get install -y glslang-tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y glslang-tools
 
       - name: Check the renderer's GLSL for GLES
-        run: python3 android/tools/check_shaders.py glslangValidator
+        run: python3 android/tools/check_shaders.py glslang
 
       # The game's data: asm/, assets/ and the executable (the split of the disc) live in a private repo, with a token that can read it
       - name: Get asm/ from the private repo
@@ -64,14 +66,14 @@ jobs:
           echo "PS2DEV=$root" >> "$GITHUB_ENV"
           echo "PS2 toolchain at $root"
 
-      - name: Convert the game's data for Android
-        run: bash android/tools/gen_data.sh
-
       - name: Assemble the Android project
         run: bash android/tools/assemble.sh
 
       # TODO (not in this version): the native library. The game's sources and the touch bridge (src/platform/native/touch)
       # must be built into libmain.so for the NDK's ABIs, and the game data must come from the player's own disc at run time.
+
+      - name: Convert the game's data for Android
+        run: bash android/tools/gen_data.sh
 
       - name: Build the APK
         working-directory: android/build/project

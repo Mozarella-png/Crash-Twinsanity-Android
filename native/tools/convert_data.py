@@ -560,6 +560,10 @@ def main():
     objects, order = read_split()
     types_info = json.loads((BUILD / "data_types.json").read_text())
     ps2, native = dump_layouts("ps2"), dump_layouts("native")
+    # Diagnostic: how many records each target's dump gave, and which ones have the name of a record that's missing
+    print("layouts: ps2", len(ps2), "native", len(native), "| Matrix ps2:", sorted(k for k in ps2 if "Matrix" in k)[:8],
+          "native:", sorted(k for k in native if "Matrix" in k)[:8], "| Vector ps2:", sorted(k for k in ps2 if "Vector" in k)[:8],
+          flush=True)
     for layouts in (ps2, native):
         for name, layout in layouts.items():
             layout["union"] = name.startswith("union ")

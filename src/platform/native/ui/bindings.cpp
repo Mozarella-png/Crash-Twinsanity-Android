@@ -351,8 +351,6 @@ void ResetBindingsForTest()
     Read();
 }
 
-}  // namespace (InPlay is the NativeUi's, for pads.cpp and the touch overlay)
-
 // Whether the game is being played (not in a menu, paused or the settings): the keys bound to play only reach it then, and the
 // arrows (the camera in play) move the menus' selection otherwise
 bool InPlay()
@@ -360,9 +358,6 @@ bool InPlay()
     GameController* controller = G_GameController;
     return controller != nullptr && controller->State() == GameController::StatePlaying && !SettingsOpen();
 }
-
-namespace
-{
 
 // A stick's bytes from the directions pushed by keys (-1, 0, 1 each): all the way, a diagonal normalised as a stick's (each axis
 // 1/sqrt 2 of the way)
@@ -770,4 +765,10 @@ void ButtonName(s32 button, char* out, u32 size)
         std::snprintf(out, size, "%d", button);
     }
 }
+// Whether the game is being played, for the Android touch overlay (touch/touchpad.h): the same test as the pads use
+bool PlayingNow()
+{
+    return InPlay();
+}
+
 }

@@ -55,7 +55,7 @@ def run(glslang, text, stage):
 
 
 def main():
-    glslang = sys.argv[1] if len(sys.argv) > 1 else "glslangValidator"
+    glslang = sys.argv[1] if len(sys.argv) > 1 else "glslang"
     bodies = []
     everything = []
     for rel in SOURCES:

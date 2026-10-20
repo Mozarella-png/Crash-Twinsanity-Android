@@ -133,8 +133,8 @@ struct BoundPad
 };
 
 void ReadBindings(const bool* keys, SDL_Gamepad* gamepad, BoundPad* pad);
-// Whether the game is being played (not in a menu, paused or the settings): see bindings.cpp
-bool InPlay();
+// Whether the game is being played (not in a menu, paused or the settings): the touch overlay and the pads use it
+bool PlayingNow();
 // A gamepad stick's bytes (its circle) moved out to the DualShock 2's square (bindings.cpp)
 void Squared(u8* x, u8* y);
 // The level sweep (sweep.cpp, $TWIN_SWEEP_LEVEL): whether it runs, its frame (the warp, the time played, the exit) and its scripted

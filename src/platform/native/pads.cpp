@@ -288,7 +288,7 @@ s32 Platform::Pads::Read(s32 port, s32 slot, u8* data)
 
     NativeUi::ReadBindings(keys, g_Gamepad, &bound);
     // The Android touch overlay (touch/): its buttons and stick, in play only; the menus take the touches as the mouse does
-    Touch::SetInPlay(NativeUi::InPlay());
+    Touch::SetInPlay(NativeUi::PlayingNow());
     if (Touch::InPlay())
     {
         Touch::Apply(&bound.buttons, &bound.leftX, &bound.leftY);

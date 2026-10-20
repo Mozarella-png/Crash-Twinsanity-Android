@@ -23,9 +23,15 @@ mkdir -p "$APP/src/main/assets/touch"
 cp "$ROOT"/android/overlay/assets/touch/* "$APP/src/main/assets/touch/"
 
 # Package, launcher activity and name
-sed -i "s/org\.libsdl\.app\.SDLActivity/$PKG.CrashActivity/g" "$APP/src/main/AndroidManifest.xml"
-sed -i "s/applicationId \"org\.libsdl\.app\"/applicationId \"$PKG\"/" "$APP/build.gradle"
+# The template's activity is written as "SDLActivity" (relative to its namespace, org.libsdl.app); the namespace is the app's id
+sed -i "s|android:name=\"SDLActivity\"|android:name=\"$PKG.CrashActivity\"|" "$APP/src/main/AndroidManifest.xml"
+sed -i "s|namespace \"org\.libsdl\.app\"|namespace \"$PKG\"|" "$APP/build.gradle"
 sed -i 's|<string name="app_name">[^<]*</string>|<string name="app_name">Crash Twinsanity</string>|' "$APP/src/main/res/values/strings.xml"
+
+# Each edit has to have landed: a template that changed would otherwise build the wrong activity without a word
+grep -q "android:name=\"$PKG.CrashActivity\"" "$APP/src/main/AndroidManifest.xml" || { echo "the launcher activity wasn't replaced in the manifest" >&2; exit 1; }
+grep -q "namespace \"$PKG\"" "$APP/build.gradle" || { echo "the namespace wasn't replaced in build.gradle" >&2; exit 1; }
+grep -q "<string name=\"app_name\">Crash Twinsanity</string>" "$APP/src/main/res/values/strings.xml" || { echo "the app name wasn't set" >&2; exit 1; }
 
 # The launcher icon: our PNGs at every density, and no adaptive icon from the template (it would win on Android 8+)
 RES="$APP/src/main/res"

@@ -34,3 +34,11 @@ v9: el conversor necesita también assets/ y SLES_525.68 (además de asm/); el w
 v10: el paso del toolchain de PS2 busca el compilador dentro del tarball y fija PS2DEV a su raíz (con ps2sdk/).
 
 v11: convert_data.py: clean() ignora alignas(...); el error de tamaño dice qué layouts parecidos tiene (diagnóstico de Matrix4x4).
+
+v12 (revisión): la actividad lanzadora es com.giopixel.crashtwinsanity.CrashActivity (antes quedaba SDLActivity y el
+overlay no corría); namespace de la app = com.giopixel.crashtwinsanity; assemble.sh falla si un reemplazo no coincide.
+bindings.cpp restaurado al original: la función pública es NativeUi::PlayingNow() (antes rompía el ámbito del namespace
+anónimo). CI: glslang (nombre del binario de Ubuntu), apt-get update, y el ensamblado del proyecto antes de gen_data.sh
+(necesita las cabeceras de SDL).
+
+v13: convert_data.py imprime cuántos layouts da cada target y cuáles tienen nombres de Matrix/Vector (diagnóstico de Matrix4x4).
