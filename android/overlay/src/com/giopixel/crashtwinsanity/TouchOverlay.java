@@ -72,6 +72,32 @@ public class TouchOverlay extends View {
         }
         knob = load(context, "touch/knob.png");
         loadLayout();
+        postDelayed(playWatch, PLAY_WATCH_MS);
+    }
+
+    /**
+     * Redraws only when something changes. Touches, the editing buttons and the stick already ask for a redraw themselves,
+     * so the only change left to watch for is the game entering or leaving play (its menus show no controls). This checks it
+     * a few times a second; the overlay used to redraw on every vertical blank, which cost the game its frame time.
+     */
+    private static final int PLAY_WATCH_MS = 250;
+    private boolean lastInPlay = false;
+    private final Runnable playWatch = new Runnable() {
+        @Override
+        public void run() {
+            boolean inPlay = TouchBridge.inPlay();
+            if (inPlay != lastInPlay) {
+                lastInPlay = inPlay;
+                invalidate();
+            }
+            postDelayed(this, PLAY_WATCH_MS);
+        }
+    };
+
+    @Override
+    protected void onDetachedFromWindow() {
+        removeCallbacks(playWatch);
+        super.onDetachedFromWindow();
     }
 
     private static Bitmap load(Context context, String path) {
@@ -310,7 +336,6 @@ public class TouchOverlay extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         if (!editing && !TouchBridge.inPlay()) {
-            postInvalidateOnAnimation();
             return;
         }
         // What's held shows full, the rest at its opacity
@@ -342,7 +367,6 @@ public class TouchOverlay extends View {
         } else {
             drawEditButton(canvas);
         }
-        postInvalidateOnAnimation();
     }
 
     private void drawArt(Canvas canvas, Bitmap bmp, int i, float a) {
