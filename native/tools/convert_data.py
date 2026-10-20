@@ -139,6 +139,10 @@ def probe_source():
             names.add(m.group(1))
     return text + "".join(f"static_assert(sizeof({n}) > 0);\n" for n in sorted(names))
 
+# v19: the probe's own <type_traits> and <tuple> (see native/tools/probe_std). They come first in the include path, so the
+# probe never parses the standard library's versions, which crash clang 18 (the layouts are the game's, not the library's)
+PROBE_STD = ["-I", str(HERE / "native" / "tools" / "probe_std")]
+
 def dump_layouts(target):
     """{record name: {"size", "align", "fields": [(offset, bit, depth, type, name)]}} for "native" or "ps2" """
     BUILD.mkdir(parents=True, exist_ok=True)
@@ -154,10 +158,10 @@ def dump_layouts(target):
         probe.write_text(probe_text)
     if target == "native":
         base = [host.CLANG, "-std=gnu++2c", "-fsyntax-only", "-DTWIN_NATIVE", "-Inative/include", "-Iinclude",
-                "-Isrc/platform/native"] + host.host_includes() + host.native_flags()
+                "-Isrc/platform/native"] + PROBE_STD + host.host_includes() + host.native_flags()
     else:
         base = ([host.CLANG, "--target=mips64el-unknown-elf", "-mabi=n32", "-std=gnu++2c", "-fsyntax-only", "-nostdinc++"]
-                + list(toolchain_includes()) + ["-D_EE", "-Iinclude", "-I" + host.ps2sdk() + "/ee/include",
+                + PROBE_STD + list(toolchain_includes()) + ["-D_EE", "-Iinclude", "-I" + host.ps2sdk() + "/ee/include",
                                           "-I" + host.ps2sdk() + "/common/include"])
     base += ["-fno-exceptions", "-fno-rtti", "-Wno-everything", "-Xclang", "-fdump-record-layouts-complete"]
 
@@ -167,6 +171,13 @@ def dump_layouts(target):
     canary.write_text("struct Canary { int a; };\nstatic_assert(sizeof(Canary) == 4);\n")
     canary_run = subprocess.run(base + [str(canary)], capture_output=True, text=True, cwd=HERE)
     print(f"{target}: canary exit {canary_run.returncode}", flush=True)
+    # Canary 2 (v18): the standard headers the crashes sit in (type_traits, cstddef), with the layout dump and without it
+    std_canary = BUILD / "std_canary.cpp"
+    std_canary.write_text("#include <type_traits>\n#include <cstddef>\nstruct StdCanary { int a; };\n")
+    no_dump = [a for i, a in enumerate(base) if a != "-fdump-record-layouts-complete" and base[i - 1] != "-Xclang"]
+    with_dump = subprocess.run(base + [str(std_canary)], capture_output=True, text=True, cwd=HERE)
+    without_dump = subprocess.run(no_dump + [str(std_canary)], capture_output=True, text=True, cwd=HERE)
+    print(f"{target}: std canary exit with dump {with_dump.returncode}, without dump {without_dump.returncode}", flush=True)
     layouts = {}
     from concurrent.futures import ThreadPoolExecutor
     def run(source):
@@ -175,7 +186,7 @@ def dump_layouts(target):
             # The native platform's own types laid out as the PS2 had them: built for the PS2's target (its C++ library's
             # headers) with the native build's headers in place of PS2SDK's (uiptr is the target's pointer size, 32 bits)
             args = ([host.CLANG, "--target=mips64el-unknown-elf", "-mabi=n32", "-std=gnu++2c", "-fsyntax-only", "-nostdinc++"]
-                    + list(toolchain_includes()) + ["-DTWIN_NATIVE", "-Inative/include", "-Iinclude", "-Isrc/platform/native"]
+                    + PROBE_STD + list(toolchain_includes()) + ["-DTWIN_NATIVE", "-Inative/include", "-Iinclude", "-Isrc/platform/native"]
                     + host.host_includes() + ["-fno-exceptions", "-fno-rtti", "-Wno-everything",
                                               "-Xclang", "-fdump-record-layouts-complete"])
         result = subprocess.run(args + [str(source)], capture_output=True, text=True, cwd=HERE)
