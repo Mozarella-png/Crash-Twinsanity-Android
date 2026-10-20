@@ -160,6 +160,13 @@ def dump_layouts(target):
                 + list(toolchain_includes()) + ["-D_EE", "-Iinclude", "-I" + host.ps2sdk() + "/ee/include",
                                           "-I" + host.ps2sdk() + "/common/include"])
     base += ["-fno-exceptions", "-fno-rtti", "-Wno-everything", "-Xclang", "-fdump-record-layouts-complete"]
+
+    # Canary (v17): a trivial translation unit with the same flags. If it crashes too, the crash is in the flags (the
+    # layout dump), not in the game's headers. The result is printed once per target.
+    canary = BUILD / "canary.cpp"
+    canary.write_text("struct Canary { int a; };\nstatic_assert(sizeof(Canary) == 4);\n")
+    canary_run = subprocess.run(base + [str(canary)], capture_output=True, text=True, cwd=HERE)
+    print(f"{target}: canary exit {canary_run.returncode}", flush=True)
     layouts = {}
     from concurrent.futures import ThreadPoolExecutor
     def run(source):
@@ -179,7 +186,9 @@ def dump_layouts(target):
         lines = result.stderr.splitlines()
         if result.returncode != 0 or any("error:" in l for l in lines):
             print(f"{target}: {source.name} exit {result.returncode}; first errors and the end of stderr:", flush=True)
-            for line in [l for l in lines if "error:" in l][:5] + ["   ..."] + lines[-40:]:
+            # clang's "Stack dump:" block names the command (program arguments) and the frames, which come first
+            start = next((i for i, l in enumerate(lines) if "Stack dump:" in l), max(len(lines) - 40, 0))
+            for line in [l for l in lines if "error:" in l][:3] + lines[start:start + 40]:
                 print("   ", line[:300], flush=True)
         return result.stdout
 
