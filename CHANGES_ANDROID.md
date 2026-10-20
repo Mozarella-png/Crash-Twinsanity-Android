@@ -32,3 +32,5 @@ v8: el repo privado se toma del dueño del repo principal (github.repository_own
 v9: el conversor necesita también assets/ y SLES_525.68 (además de asm/); el workflow los copia del repo privado.
 
 v10: el paso del toolchain de PS2 busca el compilador dentro del tarball y fija PS2DEV a su raíz (con ps2sdk/).
+
+v11: convert_data.py: clean() ignora alignas(...); el error de tamaño dice qué layouts parecidos tiene (diagnóstico de Matrix4x4).

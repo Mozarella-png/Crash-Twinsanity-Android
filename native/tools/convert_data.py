@@ -251,6 +251,7 @@ class Types:
 
     @staticmethod
     def clean(t):
+        t = re.sub(r"\balignas\s*\([^)]*\)", "", t)
         t = re.sub(r"\b(const|volatile|struct|class|union|enum|typename)\b", "", t)
         return re.sub(r"\s+", " ", t).strip()
 
@@ -343,7 +344,9 @@ class Types:
     def sizes(self, t):
         p = self.parse(t)
         if p is None:
-            raise KeyError(t)
+            # Say which layouts the dumps gave with a similar name, so a missing record is told apart from a renamed one
+            similar = sorted(k for k in self.ps2 if t.split()[-1][:6] in k)[:20]
+            raise KeyError(f"no layout for {t!r}; layouts with a similar name: {similar}; {len(self.ps2)} layouts in all")
         if p[0] == "pointer":
             return 4, 8, 4, 8
         if p[0] == "scalar":
