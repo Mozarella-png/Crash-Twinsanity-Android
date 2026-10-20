@@ -120,6 +120,15 @@ extern "C"
     void ClearInstancePools(ItemPools<InstanceContext*>* pools) RETAIL(FUN_001f43b0);
 }
 
+// Non-template entry points for the four specializations the game calls from its own code. The specializations
+// themselves stay below (their RETAIL labels, and the retail vtables' view of them). Calls made through these go to
+// the same bodies, under C++ names no compiler has to resolve through a label: clang 18 emitted the C++ names at some
+// call sites (scenery.cpp, chunkloading.cpp), which the labelled definitions don't satisfy.
+ItemPool<InstanceContext*>* ConstructItemPool(ItemPool<InstanceContext*>* pool);
+ItemPool<SceneryCell*>* ConstructItemPool(ItemPool<SceneryCell*>* pool);
+void DestroyItemPoolsWalk(PoolsWalk<InstanceContext*>* walk, u32 destroyFlags);
+void DestroyItemPoolsWalk(PoolsWalk<SceneryCell*>* walk, u32 destroyFlags);
+
 template <> ItemPool<InstanceContext*>* ItemPool<InstanceContext*>::Construct(ItemPool* pool) RETAIL(FUN_001f4290);
 template <> void ItemPool<InstanceContext*>::Destroy(u32 destroyFlags) RETAIL(FUN_001f4460);
 template <> void ItemPool<InstanceContext*>::Grow() RETAIL(FUN_00100dc8);

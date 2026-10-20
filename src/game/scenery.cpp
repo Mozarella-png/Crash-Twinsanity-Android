@@ -308,7 +308,7 @@ ItemPool<T>* NewPools()
     ItemPool<T>* pools = NewArray<ItemPool<T>>(CollectorPools);
     for (u32 index = 0; index < CollectorPools; index++)
     {
-        ItemPool<T>::Construct(&pools[index]);
+        ConstructItemPool(&pools[index]);
     }
 
     return pools;
@@ -394,7 +394,7 @@ u32 CollectCellInstances(InstanceCollector* collector, u32 kinds)
     }
 
     u32 found = InstanceCollectorFound(collector);
-    walk.Destroy(0);
+    DestroyItemPoolsWalk(&walk, 0);
     return found;
 }
 }

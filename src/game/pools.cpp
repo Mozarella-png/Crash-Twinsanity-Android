@@ -609,3 +609,23 @@ void PoolsWalk<void*>::Next()
 {
     NextItem(this);
 }
+
+ItemPool<InstanceContext*>* ConstructItemPool(ItemPool<InstanceContext*>* pool)
+{
+    return ConstructPool(pool, g_InstancePoolVTable);
+}
+
+ItemPool<SceneryCell*>* ConstructItemPool(ItemPool<SceneryCell*>* pool)
+{
+    return ConstructPool(pool, g_CellPoolVTable);
+}
+
+void DestroyItemPoolsWalk(PoolsWalk<InstanceContext*>* walk, u32 destroyFlags)
+{
+    DestroyPoolsWalk(walk, g_InstancePoolsWalkVTable, g_InstanceWalkBaseVTable, destroyFlags);
+}
+
+void DestroyItemPoolsWalk(PoolsWalk<SceneryCell*>* walk, u32 destroyFlags)
+{
+    DestroyPoolsWalk(walk, g_CellPoolsWalkVTable, g_CellWalkBaseVTable, destroyFlags);
+}

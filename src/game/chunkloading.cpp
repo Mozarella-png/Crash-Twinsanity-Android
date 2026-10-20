@@ -1693,7 +1693,7 @@ void StopFilteredObjectNodes(ChunkManager*, const u32* filter)
             }
         }
 
-        walk.Destroy(DestroyOnly);
+        DestroyItemPoolsWalk(&walk, DestroyOnly);
     }
 
     InstanceCollectorDestroy(&collector, DestroyOnly);
