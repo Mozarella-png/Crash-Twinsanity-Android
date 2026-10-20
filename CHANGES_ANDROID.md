@@ -20,3 +20,9 @@ Corrección de CI (v3): se quita android-actions/setup-android@v3 (falla en la i
 
 Fase C (primer APK, v5): libmain.so de prueba (android/native/stub_main.c: ventana SDL3 amarilla) y la capa táctil
 compilada con el NDK por Android.mk (generado por assemble.sh). jni/SDL enlaza con SDL3 en el build. minSdk 24 y arm64.
+
+Fase B (parcial, v6): el jugador importa su ISO PAL (se copia a la carpeta privada de la app) y el núcleo lo recibe por
+TWINSANITY_ISO; SettingsFolder usa TWIN_SETTINGS_DIR en Android (android_glue.cpp, NativeBridge.java, CrashActivity).
+Pendiente: data.cpp (ver android/README.md).
+
+Fase B (v7): generación de data.cpp en CI (android/tools/gen_data.sh) con asm/ desde un repo privado; paso en el workflow.

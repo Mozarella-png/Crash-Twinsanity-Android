@@ -29,6 +29,27 @@ jobs:
       - name: Check the renderer's GLSL for GLES
         run: python3 android/tools/check_shaders.py glslangValidator
 
+      # The game's data: asm/ (the split of the disc's executable) lives in a private repo, with a token that can read it
+      - name: Get asm/ from the private repo
+        uses: actions/checkout@v4
+        with:
+          repository: GioPixelGH/crash-twinsanity-private
+          token: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          path: private
+
+      - name: Copy asm/ into the repo
+        run: cp -r private/asm ./asm
+
+      - name: Install the PS2 toolchain's headers
+        run: |
+          curl -fsSL -o ps2dev.tar.gz https://github.com/ps2dev/ps2dev/releases/download/latest/ps2dev-ubuntu-latest.tar.gz
+          sudo mkdir -p /opt/ps2dev
+          sudo tar -xzf ps2dev.tar.gz -C /opt/ps2dev
+          echo "PS2DEV=/opt/ps2dev" >> "$GITHUB_ENV"
+
+      - name: Convert the game's data for Android
+        run: bash android/tools/gen_data.sh
+
       - name: Assemble the Android project
         run: bash android/tools/assemble.sh
 

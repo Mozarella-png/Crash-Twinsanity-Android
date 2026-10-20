@@ -60,7 +60,8 @@ LOCAL_MODULE := main
 # The stub (android/native) until the game builds for Android; the touch bridge (src/platform/native/touch) is the game's
 # own code and is built from the repo, so its JNI functions exist in libmain.so
 LOCAL_SRC_FILES := stub_main.c \
-    @ROOT@/src/platform/native/touch/touchpad.cpp
+    @ROOT@/src/platform/native/touch/touchpad.cpp \
+    @ROOT@/src/platform/native/android_glue.cpp
 
 LOCAL_C_INCLUDES := @OUT@/SDL/include @ROOT@/src/platform/native
 

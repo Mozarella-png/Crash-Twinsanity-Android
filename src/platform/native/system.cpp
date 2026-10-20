@@ -123,6 +123,13 @@ void Native::ParseArguments(int& argc, char** argv)
 // dialog the first time it's launched without one
 std::string Native::SettingsFolder()
 {
+#if defined(__ANDROID__)
+    // Android: the app's private folder, given by the activity (android_glue.cpp) before the game starts
+    if (const char* dir = std::getenv("TWIN_SETTINGS_DIR"); dir != nullptr && *dir != '\0')
+    {
+        return dir;
+    }
+#endif
 #if defined(_WIN32)
     // Windows: %APPDATA%\Crash Twinsanity (the roaming settings, as SDL_GetPrefPath has them), forward slashes like the rest
     const char* appData = std::getenv("APPDATA");
