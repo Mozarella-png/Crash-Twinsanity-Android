@@ -1,0 +1,31 @@
+// Probe-only stand-in for <initializer_list> (native/tools/convert_data.py). The compiler reads the braced lists through
+// std::initializer_list; this is the class with the members it needs (a pointer and a count), the same as the real one.
+#pragma once
+
+namespace std
+{
+template <class E>
+class initializer_list
+{
+public:
+    constexpr initializer_list() noexcept : first_(nullptr), count_(0)
+    {
+    }
+    constexpr const E* begin() const noexcept
+    {
+        return first_;
+    }
+    constexpr const E* end() const noexcept
+    {
+        return first_ + count_;
+    }
+    constexpr unsigned long size() const noexcept
+    {
+        return count_;
+    }
+
+private:
+    const E* first_;
+    unsigned long count_;
+};
+} // namespace std

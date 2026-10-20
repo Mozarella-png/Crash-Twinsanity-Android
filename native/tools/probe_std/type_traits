@@ -52,17 +52,21 @@ struct is_pointer<T*>
 {
     static constexpr bool value = true;
 };
+// (no partial specialization derives from another one: clang 18 crashes parsing that, see the probe's notes)
 template <class T>
-struct is_pointer<T* const> : is_pointer<T*>
+struct is_pointer<T* const>
 {
+    static constexpr bool value = true;
 };
 template <class T>
-struct is_pointer<T* volatile> : is_pointer<T*>
+struct is_pointer<T* volatile>
 {
+    static constexpr bool value = true;
 };
 template <class T>
-struct is_pointer<T* const volatile> : is_pointer<T*>
+struct is_pointer<T* const volatile>
 {
+    static constexpr bool value = true;
 };
 template <class T>
 inline constexpr bool is_pointer_v = is_pointer<T>::value;
@@ -96,8 +100,9 @@ struct is_void_base<void>
     static constexpr bool value = true;
 };
 template <class T>
-struct is_void : is_void_base<remove_cv_t<T>>
+struct is_void
 {
+    static constexpr bool value = is_void_base<remove_cv_t<T>>::value;
 };
 template <class T>
 inline constexpr bool is_void_v = is_void<T>::value;
@@ -139,8 +144,9 @@ TWIN_PROBE_INTEGRAL(long long)
 TWIN_PROBE_INTEGRAL(unsigned long long)
 #undef TWIN_PROBE_INTEGRAL
 template <class T>
-struct is_integral : is_integral_base<remove_cv_t<T>>
+struct is_integral
 {
+    static constexpr bool value = is_integral_base<remove_cv_t<T>>::value;
 };
 template <class T>
 inline constexpr bool is_integral_v = is_integral<T>::value;

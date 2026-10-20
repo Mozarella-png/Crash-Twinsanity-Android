@@ -1,0 +1,12 @@
+// Probe-only stand-in for <cstdlib> (native/tools/convert_data.py): the C header, with the functions the game calls in std.
+#pragma once
+#include <stdlib.h>
+
+namespace std
+{
+using ::abs;
+using ::exit;
+using ::free;
+using ::getenv;
+using ::malloc;
+} // namespace std

@@ -1,0 +1,10 @@
+// Probe-only stand-in for <cstddef> (native/tools/convert_data.py): the C header, with the names the game uses in std.
+#pragma once
+#include <stddef.h>
+
+namespace std
+{
+using ::ptrdiff_t;
+using ::size_t;
+using nullptr_t = decltype(nullptr);
+} // namespace std

@@ -1,0 +1,2 @@
+// Probe-only stand-in for <bit> (native/tools/convert_data.py). The game includes <bit> without using any of its names.
+#pragma once
