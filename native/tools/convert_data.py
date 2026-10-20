@@ -153,6 +153,46 @@ def dump_layouts(target):
     sources = [probe] + sorted(p for p in (HERE / "src").rglob("*.cpp")
                                if (p.relative_to(HERE / "src").parts[0] != "platform"
                                    or p.relative_to(HERE / "src").parts[1] == "native") and p.name != "abi.cpp") + reused
+    # v20: a source that includes a C++ standard header (<vector>, <string>... no dot in the name) is left out of the
+    # probe: those headers are what crash clang 18. The game's records come from include/ (the probe covers all of it);
+    # a record defined only in a left-out source shows up as "no layout" in the conversion, with its name.
+    # The standard headers with a stand-in in native/tools/probe_std are fine. A source is left out of the probe when it
+    # reaches a standard header without one, directly or through the quoted includes it follows (src/platform/native's UI
+    # headers include <vector>, and the game's sources include those). The probe still covers every header in include/.
+    # A record defined only in a left-out source shows up as "no layout" in the conversion, with its name.
+    shimmed = {p.name for p in (HERE / "native" / "tools" / "probe_std").iterdir() if p.is_file()}
+    std_include = re.compile(r"^\s*#\s*include\s*<([A-Za-z_]+)>", re.M)
+    quoted = re.compile(r'^\s*#\s*include\s*"([^"]+)"', re.M)
+    search = [HERE, HERE / "include", HERE / "src", HERE / "native" / "include", HERE / "src" / "platform" / "native",
+              HERE / "src" / "platform" / "native" / "ui"]
+    def resolve(name, here):
+        for base in [here] + search:
+            if (base / name).is_file():
+                return base / name
+        return None
+    def real_std_in(path, seen):
+        if path in seen:
+            return None
+        seen.add(path)
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for name in std_include.findall(text):
+            if name not in shimmed:
+                return name
+        for q in quoted.findall(text):
+            found = resolve(q, path.parent)
+            if found is not None:
+                hit = real_std_in(found, seen)
+                if hit:
+                    return hit
+        return None
+    skipped = {}
+    for p in sources:
+        if p != probe:
+            hit = real_std_in(p, set())
+            if hit:
+                skipped[p.name] = hit
+    sources = [p for p in sources if p == probe or p.name not in skipped]
+    print(f"{target}: probe leaves out {len(skipped)} sources that reach the C++ standard library: {skipped}", flush=True)
     probe_text = probe_source()
     if not probe.exists() or probe.read_text() != probe_text:
         probe.write_text(probe_text)
@@ -173,7 +213,7 @@ def dump_layouts(target):
     print(f"{target}: canary exit {canary_run.returncode}", flush=True)
     # Canary 2 (v18): the standard headers the crashes sit in (type_traits, cstddef), with the layout dump and without it
     std_canary = BUILD / "std_canary.cpp"
-    std_canary.write_text("#include <type_traits>\n#include <cstddef>\nstruct StdCanary { int a; };\n")
+    std_canary.write_text("#include <type_traits>\nstruct StdCanary { int a; };\n")
     no_dump = [a for i, a in enumerate(base) if a != "-fdump-record-layouts-complete" and base[i - 1] != "-Xclang"]
     with_dump = subprocess.run(base + [str(std_canary)], capture_output=True, text=True, cwd=HERE)
     without_dump = subprocess.run(no_dump + [str(std_canary)], capture_output=True, text=True, cwd=HERE)
