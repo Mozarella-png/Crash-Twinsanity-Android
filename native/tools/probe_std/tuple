@@ -1,0 +1,21 @@
+// Probe-only stand-in for <tuple>, used by native/tools/convert_data.py (see type_traits next to this file). include/abi.h
+// uses std::tuple, tuple_cat and apply only in its calling-convention code, which the probe never instantiates.
+#pragma once
+
+namespace std
+{
+template <class... T>
+struct tuple
+{
+    constexpr tuple() = default;
+    constexpr tuple(T...)
+    {
+    }
+};
+
+template <class... Tuples>
+auto tuple_cat(Tuples&&... tuples);
+
+template <class F, class T>
+decltype(auto) apply(F&& function, T&& arguments);
+} // namespace std
