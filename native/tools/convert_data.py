@@ -139,6 +139,10 @@ def probe_source():
             names.add(m.group(1))
     return text + "".join(f"static_assert(sizeof({n}) > 0);\n" for n in sorted(names))
 
+# v19: the probe's own <type_traits> and <tuple> (see native/tools/probe_std). They come first in the include path, so the
+# probe never parses the standard library's versions, which crash clang 18 (the layouts are the game's, not the library's)
+PROBE_STD = ["-I", str(HERE / "native" / "tools" / "probe_std")]
+
 def dump_layouts(target):
     """{record name: {"size", "align", "fields": [(offset, bit, depth, type, name)]}} for "native" or "ps2" """
     BUILD.mkdir(parents=True, exist_ok=True)
@@ -149,17 +153,81 @@ def dump_layouts(target):
     sources = [probe] + sorted(p for p in (HERE / "src").rglob("*.cpp")
                                if (p.relative_to(HERE / "src").parts[0] != "platform"
                                    or p.relative_to(HERE / "src").parts[1] == "native") and p.name != "abi.cpp") + reused
+    # v20: a source that includes a C++ standard header (<vector>, <string>... no dot in the name) is left out of the
+    # probe: those headers are what crash clang 18. The game's records come from include/ (the probe covers all of it);
+    # a record defined only in a left-out source shows up as "no layout" in the conversion, with its name.
+    # The standard headers with a stand-in in native/tools/probe_std are fine. A source is left out of the probe when it
+    # reaches a standard header without one, directly or through the quoted includes it follows (src/platform/native's UI
+    # headers include <vector>, and the game's sources include those). The probe still covers every header in include/.
+    # A record defined only in a left-out source shows up as "no layout" in the conversion, with its name.
+    shimmed = {p.name for p in (HERE / "native" / "tools" / "probe_std").iterdir() if p.is_file()}
+    std_include = re.compile(r"^\s*#\s*include\s*<([A-Za-z_]+)>", re.M)
+    quoted = re.compile(r'^\s*#\s*include\s*"([^"]+)"', re.M)
+    search = [HERE, HERE / "include", HERE / "src", HERE / "native" / "include", HERE / "src" / "platform" / "native",
+              HERE / "src" / "platform" / "native" / "ui"]
+    def resolve(name, here):
+        for base in [here] + search:
+            if (base / name).is_file():
+                return base / name
+        return None
+    def real_std_in(path, seen):
+        if path in seen:
+            return None
+        seen.add(path)
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for name in std_include.findall(text):
+            if name not in shimmed:
+                return name
+        for q in quoted.findall(text):
+            found = resolve(q, path.parent)
+            if found is not None:
+                hit = real_std_in(found, seen)
+                if hit:
+                    return hit
+        return None
+    skipped = {}
+    for p in sources:
+        if p != probe:
+            hit = real_std_in(p, set())
+            if hit:
+                skipped[p.name] = hit
+    sources = [p for p in sources if p == probe or p.name not in skipped]
+    print(f"{target}: probe leaves out {len(skipped)} sources that reach the C++ standard library: {skipped}", flush=True)
     probe_text = probe_source()
     if not probe.exists() or probe.read_text() != probe_text:
         probe.write_text(probe_text)
     if target == "native":
         base = [host.CLANG, "-std=gnu++2c", "-fsyntax-only", "-DTWIN_NATIVE", "-Inative/include", "-Iinclude",
-                "-Isrc/platform/native"] + host.host_includes() + host.native_flags()
+                "-Isrc/platform/native"] + PROBE_STD + host.host_includes() + host.native_flags()
     else:
         base = ([host.CLANG, "--target=mips64el-unknown-elf", "-mabi=n32", "-std=gnu++2c", "-fsyntax-only", "-nostdinc++"]
-                + list(toolchain_includes()) + ["-D_EE", "-Iinclude", "-I" + host.ps2sdk() + "/ee/include",
+                + PROBE_STD + list(toolchain_includes()) + ["-D_EE", "-Iinclude", "-I" + host.ps2sdk() + "/ee/include",
                                           "-I" + host.ps2sdk() + "/common/include"])
     base += ["-fno-exceptions", "-fno-rtti", "-Wno-everything", "-Xclang", "-fdump-record-layouts-complete"]
+
+    # Canary (v17): a trivial translation unit with the same flags. If it crashes too, the crash is in the flags (the
+    # layout dump), not in the game's headers. The result is printed once per target.
+    canary = BUILD / "canary.cpp"
+    canary.write_text("struct Canary { int a; };\nstatic_assert(sizeof(Canary) == 4);\n")
+    canary_run = subprocess.run(base + [str(canary)], capture_output=True, text=True, cwd=HERE)
+    print(f"{target}: canary exit {canary_run.returncode}", flush=True)
+    # Canary 2 (v18): the standard headers the crashes sit in (type_traits, cstddef), with the layout dump and without it
+    std_canary = BUILD / "std_canary.cpp"
+    std_canary.write_text("#include <type_traits>\nstruct StdCanary { int a; };\n")
+    # the dump is two arguments, "-Xclang" and "-fdump-record-layouts-complete": both go, or clang reads the next one as the flag's value
+    no_dump = []
+    skip_next = False
+    for a in base:
+        if skip_next:
+            skip_next = False
+            continue
+        if a == "-Xclang" and base[base.index(a) + 1:base.index(a) + 2] == ["-fdump-record-layouts-complete"]:
+            skip_next = True
+            continue
+        no_dump.append(a)
+    with_dump = subprocess.run(base + [str(std_canary)], capture_output=True, text=True, cwd=HERE)
+    without_dump = subprocess.run(no_dump + [str(std_canary)], capture_output=True, text=True, cwd=HERE)
+    print(f"{target}: std canary exit with dump {with_dump.returncode}, without dump {without_dump.returncode}", flush=True)
     layouts = {}
     from concurrent.futures import ThreadPoolExecutor
     def run(source):
@@ -168,10 +236,22 @@ def dump_layouts(target):
             # The native platform's own types laid out as the PS2 had them: built for the PS2's target (its C++ library's
             # headers) with the native build's headers in place of PS2SDK's (uiptr is the target's pointer size, 32 bits)
             args = ([host.CLANG, "--target=mips64el-unknown-elf", "-mabi=n32", "-std=gnu++2c", "-fsyntax-only", "-nostdinc++"]
-                    + list(toolchain_includes()) + ["-DTWIN_NATIVE", "-Inative/include", "-Iinclude", "-Isrc/platform/native"]
+                    + PROBE_STD + list(toolchain_includes()) + ["-DTWIN_NATIVE", "-Inative/include", "-Iinclude", "-Isrc/platform/native"]
                     + host.host_includes() + ["-fno-exceptions", "-fno-rtti", "-Wno-everything",
                                               "-Xclang", "-fdump-record-layouts-complete"])
-        return subprocess.run(args + [str(source)], capture_output=True, text=True, cwd=HERE).stdout
+        result = subprocess.run(args + [str(source)], capture_output=True, text=True, cwd=HERE)
+        # The layouts come from stdout, but a header that fails to compile stops the probe before its records are laid
+        # out, and then they're missing without a word (no Matrix4x4 or Vector4 in the dumps). Say what the compiler said.
+        # A crash (exit 139 = SIGSEGV) leaves clang's stack dump in stderr: the last lines name the function that crashed.
+        # The first errors go too, for the compiler's own complaints.
+        lines = result.stderr.splitlines()
+        if result.returncode != 0 or any("error:" in l for l in lines):
+            print(f"{target}: {source.name} exit {result.returncode}; first errors and the end of stderr:", flush=True)
+            # clang's "Stack dump:" block names the command (program arguments) and the frames, which come first
+            start = next((i for i, l in enumerate(lines) if "Stack dump:" in l), max(len(lines) - 40, 0))
+            for line in [l for l in lines if "error:" in l][:3] + lines[start:start + 40]:
+                print("   ", line[:300], flush=True)
+        return result.stdout
 
     # Each file's layouts kept between runs (native/tools/host.py's FileCache): only the files that changed are laid out again
     files = host.FileCache(f"layouts_{target}_cache", " ".join(base) + " " + " ".join(toolchain_includes() if target == "ps2"

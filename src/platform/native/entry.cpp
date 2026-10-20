@@ -8,6 +8,10 @@
 #include "ui/nativeui.h"
 
 #include <SDL3/SDL.h>
+#if defined(__ANDROID__)
+// SDL's Android launcher calls SDL_main: this file's main is renamed to it here, as SDL asks of the file defining main
+#include <SDL3/SDL_main.h>
+#endif
 
 #include <cstdlib>
 #include <cstring>

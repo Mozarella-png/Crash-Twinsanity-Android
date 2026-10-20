@@ -75,10 +75,14 @@ struct Signature<Result(Args...)>
     static constexpr bool Floats[Count + 1] = {IsFloat<Args>..., false};
 };
 
-// A pointer, which picks one of overloaded functions (static_cast to its type)
+// A pointer, which picks one of overloaded functions (static_cast to its type).
+// Spelled out rather than derived from Signature<Result(Args...)>: clang 18 crashes on a partial specialization that
+// derives from another one (the probe in native/tools/convert_data.py stops there). The members are the same.
 template <typename Result, typename... Args>
-struct Signature<Result (*)(Args...)> : Signature<Result(Args...)>
+struct Signature<Result (*)(Args...)>
 {
+    static constexpr u32 Count = sizeof...(Args);
+    static constexpr bool Floats[Count + 1] = {IsFloat<Args>..., false};
 };
 
 // Methods take the object first
@@ -90,8 +94,10 @@ struct Signature<Result (Class::*)(Args...)>
 };
 
 template <typename Class, typename Result, typename... Args>
-struct Signature<Result (Class::*)(Args...) const> : Signature<Result (Class::*)(Args...)>
+struct Signature<Result (Class::*)(Args...) const>
 {
+    static constexpr u32 Count = sizeof...(Args) + 1;
+    static constexpr bool Floats[Count + 1] = {false, IsFloat<Args>..., false};
 };
 
 struct AsmText

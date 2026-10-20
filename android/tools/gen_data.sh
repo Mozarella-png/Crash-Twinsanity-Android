@@ -34,6 +34,14 @@ export TWIN_HOST_INCLUDES="$ROOT/android/build/SDL/include"
 export PS2DEV
 mkdir -p "$ROOT/build/native"
 cd "$ROOT"
+# The same steps as the desktop build's CMake (native/CMakeLists.txt), in its order: the data, the script commands' layouts,
+# and VU1's and VU0's programs translated to C++
 python3 native/tools/data_types.py
 python3 native/tools/convert_data.py
-ls -l build/native/data.cpp
+python3 native/tools/script_layouts.py
+python3 native/tools/vu1_translate.py build/native/vu1programs.cpp
+python3 native/tools/vu1_translate.py --vu0 build/native/vu0programs.cpp
+for generated in data.cpp scriptlayouts.cpp vu1programs.cpp vu1programs_7.cpp vu0programs.cpp vu0programs_1.cpp; do
+    [ -s "build/native/$generated" ] || { echo "build/native/$generated wasn't made" >&2; exit 1; }
+done
+ls -l build/native/*.cpp

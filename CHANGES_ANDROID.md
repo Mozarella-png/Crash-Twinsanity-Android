@@ -45,3 +45,22 @@ v13: convert_data.py imprime cuántos layouts da cada target y cuáles tienen no
 
 v14: convert_data.py: el probe fuerza el layout de cada registro de las cabeceras (sizeof), porque clang solo vuelca los
 layouts que se usan; antes faltaban incluso Vector4 (147/199 layouts). Sin probar con clang: el g++ del probe compila (0 errores).
+
+v15 (revisión del build en CI): assemble.sh escribe LOCAL_SRC_FILES de jni/src con rutas relativas (antes absolutas) y
+comprueba que cada fuente exista; build.gradle fija options.encoding = 'UTF-8' para el Java (el overlay tiene texto en
+español y no depender del locale del runner). Verificado: shaders (42 variantes, 0 fallos), toolchain PS2 (la URL y la
+raíz que busca el workflow), JNI (nombres de touchpad.cpp y android_glue.cpp contra las declaraciones native de Java),
+compilación en sintaxis de touchpad.cpp y android_glue.cpp con jni.h, y assemble.sh ejecutado de punta a punta contra
+SDL 3.2.0. No verificado: ndk-build y Gradle (necesitan NDK y Android SDK).
+
+v16 (el juego en el build de Android, pasos 1 y 2 de la hoja de ruta): jni/src/Android.mk lo genera ahora
+android/tools/make_android_mk.py con los mismos globs que native/CMakeLists.txt (src/game, core, reused_ps2.txt,
+src/platform/native), con movie_off.cpp en lugar de movie/movie.cpp (sin FFmpeg: Open falla y el juego salta la película).
+- SDL 3.4.18 (la versión del escritorio; SDL_LoadPNG existe desde 3.4): assemble.sh y el NDK r28c, que es el que fija la plantilla 3.4.18.
+- entry.cpp incluye SDL_main.h en Android (SDL llama a SDL_main, no a main).
+- assemble.sh reescrito: el namespace se reemplaza con `namespace =` o sin él; APP_PLATFORM se fija para cualquier nivel.
+- gen_data.sh hace también script_layouts.py y vu1_translate.py (VU1 y VU0), como el CMake.
+Verificado aquí: las 288 fuentes compilan en sintaxis con clang 18 y las banderas de Android contra SDL 3.4; el código
+solo-Android (entry, touchpad, android_glue, movie_off) también; assemble.sh corre de punta a punta.
+No verificado (necesita NDK y asm/ del repo privado): gen_data.sh, la compilación con ndk-build, el enlazado. El
+enlazado puede pedir los stand-ins de native/tools/make_stubs.py (el CMake de escritorio los genera); no están todavía.
