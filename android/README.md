@@ -31,7 +31,7 @@ Estado de esta versión (v1). Lo que está y lo que falta, para no confundirlo c
 
 - La librería nativa `libmain.so` todavía no se compila para Android: falta el CMake del NDK (fase C) y los datos del
   juego en tiempo de ejecución.
-- El ultrawide sin estirar en Android (la proyección 21:9 del juego sobre la pantalla del teléfono) no está conectado todavía.
+- El ultrawide sin estirar en Android: desde v17 la proporción sigue a la pantalla (16:9 a 21:9, sin bordes). Falta probarlo en el Poco, y los bordes negros de las cinemáticas del juego siguen (son del juego).
 - Los datos del juego: el build nativo los genera desde la ejecutable del disco. En Android tienen que venir del zip que
   importa el jugador, no del APK.
 - Nada de esto se ha compilado ni probado en un teléfono todavía.

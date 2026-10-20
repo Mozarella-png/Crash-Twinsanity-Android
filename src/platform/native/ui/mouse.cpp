@@ -236,6 +236,38 @@ bool WatchMouse(void*, SDL_Event* event)
         g_Wheel += event->wheel.y > 0 ? 1 : event->wheel.y < 0 ? -1 : 0;
         g_LastMotion = std::chrono::steady_clock::now();
         break;
+#if defined(__ANDROID__)
+    case SDL_EVENT_FINGER_DOWN:
+    case SDL_EVENT_FINGER_MOTION:
+    {
+        // A finger is the menus' pointer on a phone. SDL also sends the mouse's events for a touch; both set the same things, so a
+        // tap counts once. The finger's place is normalised to the window: its points are the mouse's
+        SDL_Window* window = SDL_GetWindowFromEvent(event);
+        int windowWidth = 0;
+        int windowHeight = 0;
+        if (window == nullptr || !SDL_GetWindowSize(window, &windowWidth, &windowHeight) || windowWidth <= 0 || windowHeight <= 0)
+        {
+            break;
+        }
+
+        ToPicture(event->tfinger.x * static_cast<f32>(windowWidth), event->tfinger.y * static_cast<f32>(windowHeight),
+                  &g_MouseX, &g_MouseY);
+        g_Moved = true;
+        g_LastMotion = std::chrono::steady_clock::now();
+        if (event->type == SDL_EVENT_FINGER_DOWN)
+        {
+            if (Capturing())
+            {
+                CancelCapture();
+                break;
+            }
+
+            g_LeftClick = true;
+        }
+
+        break;
+    }
+#endif
     default:
         break;
     }

@@ -33,12 +33,22 @@ struct OptionInfo
 // The defaults, the first start's and the settings' reset alike (DefaultOption): the game as the PS2 had it (no skipping its
 // cutscenes, as it couldn't; its own settings' defaults), at 60 Hz (the NTSC release's rate: 50 judders on a 60 Hz display), with
 // the PC conveniences that change nothing of the game on (fast loading, pausing and muting in the background, the mouse)
+// The phone's start values: 120 Hz (option 2: the game clock still steps 60 times a second, the frames come in between) and the
+// 21:9 widescreen (the picture takes the screen's shape, fixes.cpp). The computer keeps 60 Hz and 16:9.
+#if defined(__ANDROID__)
+constexpr s32 DefaultRefresh60 = 2;
+constexpr s32 DefaultUltrawide = 1;
+#else
+constexpr s32 DefaultRefresh60 = 1;
+constexpr s32 DefaultUltrawide = 0;
+#endif
+
 constexpr OptionInfo Infos[OptionCount] = {
     {OptionSkipCutscenes, "skip_cutscenes", 0, 1},
     {OptionFastLoading, "fast_loading", 1, 1},
     {OptionPauseOnFocusLoss, "pause_on_focus_loss", 1, 1},
     {OptionWidescreen, "widescreen", 1, 1},
-    {OptionRefresh60, "refresh_60hz", 1, 4},
+    {OptionRefresh60, "refresh_60hz", DefaultRefresh60, 4},
     {OptionRetailFixes, "retail_fixes", 0, 1},
     {OptionTextureFilter, "texture_filter", 1, 1},
     {OptionCrtFilter, "crt_filter", 0, 1},
@@ -60,7 +70,7 @@ constexpr OptionInfo Infos[OptionCount] = {
     {OptionCameraSpeed, "camera_speed", 5, 10},
     {OptionStickDeadZone, "stick_dead_zone", 0, 10},
     {OptionMuteInactive, "mute_in_background", 1, 1},
-    {OptionUltrawide, "ultrawide", 0, 1},
+    {OptionUltrawide, "ultrawide", DefaultUltrawide, 1},
     {OptionMouseLook, "mouse_look", 1, 1},
     {OptionMouseSensitivity, "mouse_sensitivity", 5, 10},
     {OptionInvertMouseY, "invert_mouse_y", 0, 1},

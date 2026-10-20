@@ -64,3 +64,10 @@ Verificado aquí: las 288 fuentes compilan en sintaxis con clang 18 y las bander
 solo-Android (entry, touchpad, android_glue, movie_off) también; assemble.sh corre de punta a punta.
 No verificado (necesita NDK y asm/ del repo privado): gen_data.sh, la compilación con ndk-build, el enlazado. El
 enlazado puede pedir los stand-ins de native/tools/make_stubs.py (el CMake de escritorio los genera); no están todavía.
+
+v17 (menús, pantalla y fps en el Android): src/platform/native/ui/mouse.cpp: en Android un dedo es el puntero de los menús (un toque
+selecciona, SDL manda también los eventos de ratón de ese toque y se cuentan una vez). graphics/presenter.h y display.cpp:
+NativeGraphicsWindowAspect(), la proporción de la ventana. fixes.cpp: en Android WideTvAspect() sigue la proporción de la
+pantalla, entre 16:9 y 21:9 (con la opción ultrawide), así que no hay bordes y no se estira; proyección, vista y ratón usan
+ese mismo valor. ui/options.cpp: en Android, por defecto 120 Hz (refresh_60hz = 2) y ultrawide encendido; en escritorio sigue
+igual. Un options.txt ya guardado conserva sus valores (se restablecen en Ajustes). Sin compilar ni probar en el Poco todavía.

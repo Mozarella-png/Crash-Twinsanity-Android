@@ -5,6 +5,8 @@
 // The rectangle the game's picture is shown in, in the window's points (not pixels: HiDPI windows have more pixels than points),
 // after the letterbox or pillarbox for the TV's shape. All zero before a window is attached
 void NativeGraphicsPictureRect(float* x, float* y, float* w, float* h);
+// The window's own shape (width over height, in pixels), 0 when there is no window yet
+float NativeGraphicsWindowAspect();
 
 // The picture's scaling to the window: linear (the default) or nearest
 void NativeGraphicsSetPresentFilter(bool linear);

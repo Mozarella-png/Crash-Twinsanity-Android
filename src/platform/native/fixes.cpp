@@ -6,6 +6,9 @@
 
 #include "game/renderer.h"
 
+#include "graphics/presenter.h"
+
+#include <algorithm>
 #include <cstdlib>
 #include <cstring>
 
@@ -80,6 +83,17 @@ f32 WideTvAspect()
     // TechieSaru's 21:9 fix (Crash-Twinsanity-Improved's "PCSX2 patches", [Widescreen 21:9 Ultrawide]) writes 0x4015 and 0x5554
     // over the halves of 16:9's 0x3FE38E39 where the renderer loads it (0x19BB48, 0x1A074C, 0x1A07DC, 0x1A0DA0)
     constexpr f32 UltrawideAspect = 0x1.2AAAA8p+1f;
+#if defined(__ANDROID__)
+    // Android: the TV takes the screen's own shape, from 16:9 up to the widescreen's widest (21:9 with the option). The
+    // projection, the view's rectangle and the mouse all read this one value, so the picture fills the screen with no bars
+    // and nothing is stretched (a phone at 2.17:1 gets its own shape; a wider one stops at 21:9)
+    const f32 screen = NativeGraphicsWindowAspect();
+    if (screen > 0.0f)
+    {
+        const f32 widest = Ultrawide() ? UltrawideAspect : WideAspect;
+        return std::clamp(screen, WideAspect, widest);
+    }
+#endif
     return Ultrawide() ? UltrawideAspect : WideAspect;
 }
 

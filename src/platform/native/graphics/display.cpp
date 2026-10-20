@@ -589,6 +589,25 @@ void NativeGraphicsPictureRect(float* x, float* y, float* w, float* h)
     *h = static_cast<f32>(vh) * sy;
 }
 
+float NativeGraphicsWindowAspect()
+{
+    Presenter& p = g_Presenter;
+    if (p.window == nullptr)
+    {
+        return 0.0f;
+    }
+
+    s32 pixelsWide = 0;
+    s32 pixelsHigh = 0;
+    SDL_GetWindowSizeInPixels(p.window, &pixelsWide, &pixelsHigh);
+    if (pixelsWide <= 0 || pixelsHigh <= 0)
+    {
+        return 0.0f;
+    }
+
+    return static_cast<f32>(pixelsWide) / static_cast<f32>(pixelsHigh);
+}
+
 void NativeGraphicsSetPresentFilter(bool linear)
 {
     g_Presenter.linear = linear;
