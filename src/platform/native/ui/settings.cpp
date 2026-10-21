@@ -240,6 +240,7 @@ void Build()
     // supersampling
     display.push_back(OptionChoice(TextAntiAliasing, TextDescAntiAliasing, OptionAntiAliasing, {0, TextFxaa}));
     display.push_back(Toggle(TextVSync, TextDescVSync, OptionVSync));
+    display.push_back(Toggle(TextAnimatedBackdrop, TextDescAnimatedBackdrop, OptionAnimatedBackdrop));
     display.push_back(Action(GameTextCentreScreen, TextDescScreenPosition, [] { OpenScreenPosition(); }));
 
     std::vector<Row>& audio = g_Rows[TabAudio];
@@ -682,7 +683,7 @@ void ResetTab(u32 tab)
         SetResolution(DefaultResolution());
         g_WidescreenTv = static_cast<u8>(DefaultOption(OptionWidescreen) != 0 ? 1 : 0);
         ResetOptions({OptionWidescreen, OptionUltrawide, OptionRefresh60, OptionTextureFilter, OptionCrtFilter, OptionTexturePack,
-                      OptionTextureUpscale, OptionAntiAliasing, OptionVSync});
+                      OptionTextureUpscale, OptionAntiAliasing, OptionVSync, OptionAnimatedBackdrop});
         break;
     case TabAudio:
         SetMusic(DefaultOption(OptionMusicVolume));

@@ -11,6 +11,7 @@
 
 #include <SDL3/SDL.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstring>
@@ -199,6 +200,7 @@ uniform vec4 tint;
 uniform float scale;
 uniform vec2 offset;
 uniform float time;
+uniform int spiral;
 
 float RoundBox(vec2 p, vec2 halfSize, float r)
 {
@@ -281,18 +283,21 @@ void main()
             c = Over(c, band, 0.18 * edge);
         }
 
-        // The spiral: the svg's 1000 units over 1300 reference pixels, its middle at (270, 350), turning a turn in 90 seconds
-        vec2 s = (q - vec2(270.0, 350.0)) / 1.3;
-        float r = length(s);
-        float angle = atan(s.y, s.x) - time * 6.28318530718 / 90.0;
-        float pixelInSvg = 1.0 / (scale * 1.3);
-        float end = 2.2 * 6.28318530718;
-        float white = min(ArmDistance(r, angle, 10.0, 35.4475, 0.0, end), ArmDistance(r, angle, 10.0, 35.4475, 3.14159265, end));
-        float whiteCover = clamp((35.0 - white) / pixelInSvg + 0.5, 0.0, 1.0) * step(r, 520.0);
-        c = Over(c, vec3(1.0), 0.18 * 0.7 * whiteCover);
-        float blue = min(ArmDistance(r, angle, 9.854, 35.4477, 0.4456, end), ArmDistance(r, angle, 9.854, 35.4477, 3.5872, end));
-        float blueCover = clamp((11.0 - blue) / pixelInSvg + 0.5, 0.0, 1.0) * step(r, 520.0);
-        c = Over(c, vec3(159.0, 182.0, 216.0) / 255.0, 0.25 * 0.7 * blueCover);
+        if (spiral != 0)
+        {
+            // The spiral: the svg's 1000 units over 1300 reference pixels, its middle at (270, 350), turning a turn in 90 seconds
+            vec2 s = (q - vec2(270.0, 350.0)) / 1.3;
+            float r = length(s);
+            float angle = atan(s.y, s.x) - time * 6.28318530718 / 90.0;
+            float pixelInSvg = 1.0 / (scale * 1.3);
+            float end = 2.2 * 6.28318530718;
+            float white = min(ArmDistance(r, angle, 10.0, 35.4475, 0.0, end), ArmDistance(r, angle, 10.0, 35.4475, 3.14159265, end));
+            float whiteCover = clamp((35.0 - white) / pixelInSvg + 0.5, 0.0, 1.0) * step(r, 520.0);
+            c = Over(c, vec3(1.0), 0.18 * 0.7 * whiteCover);
+            float blue = min(ArmDistance(r, angle, 9.854, 35.4477, 0.4456, end), ArmDistance(r, angle, 9.854, 35.4477, 3.5872, end));
+            float blueCover = clamp((11.0 - blue) / pixelInSvg + 0.5, 0.0, 1.0) * step(r, 520.0);
+            c = Over(c, vec3(159.0, 182.0, 216.0) / 255.0, 0.25 * 0.7 * blueCover);
+        }
         colour = c;
     }
     else if (mode == 3)
@@ -802,7 +807,8 @@ void DrawFrame(const std::vector<OverlayFrame::Command>& commands, int pixelWidt
             gl.Uniform1i(Uniform(r, "mode"), 2);
             gl.Uniform1f(Uniform(r, "scale"), r.scale);
             gl.Uniform2f(Uniform(r, "offset"), r.offsetX, r.offsetY);
-            gl.Uniform1f(Uniform(r, "time"), command.seconds);
+            gl.Uniform1f(Uniform(r, "time"), std::max(command.seconds, 0.0f));
+            gl.Uniform1i(Uniform(r, "spiral"), command.seconds >= 0.0f ? 1 : 0);
             std::vector<Vertex> quad;
             AddQuad(quad, 0.0f, 0.0f, r.width, r.height);
             DrawQuads(r, quad);
