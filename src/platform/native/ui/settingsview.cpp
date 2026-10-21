@@ -5,6 +5,7 @@
 // keycaps (or the pad's buttons) at the bottom. Its parts are recorded as hit regions for the mouse. The game's menus' bar of
 // prompts and the cursor are drawn here too
 #include "ui/settingsmodel.h"
+#include "ui/nativeui.h"
 #include "ui/overlay.h"
 
 #include "native.h"
@@ -534,7 +535,7 @@ void DrawSettingsView(OverlayFrame& frame, std::vector<HitRegion>& regions)
     SettingsView view = CurrentSettingsView();
     const std::vector<Row>& rows = SettingsRows(view.page);
     f32 now = Seconds();
-    frame.Backdrop(now);
+    frame.Backdrop(IsOn(OptionAnimatedBackdrop) ? now : -1.0f);
 
     // The title and its line
     TextStyle title = Display(66.0f, Orange);

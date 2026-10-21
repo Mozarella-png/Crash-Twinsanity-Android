@@ -1,6 +1,7 @@
 package com.giopixel.crashtwinsanity;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.media.AudioManager;
@@ -19,6 +20,7 @@ import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
+import android.util.DisplayMetrics;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
@@ -29,6 +31,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 /**
  * The game's activity: SDL's, with the touch overlay over it. Touches on the overlay's controls are taken here and not
@@ -43,12 +49,16 @@ public class CrashActivity extends SDLActivity {
     private static final String PREFS = "disc";
     private static final String KEY_COPIED = "copied";
 
+    /** The log is started once per process: an activity re-created by a rotation keeps appending to the same file. */
+    private static boolean logStarted = false;
+
     private TouchOverlay overlay;
     private final Handler main = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        startLog();
         // The game is a landscape TV: held upright, its picture was a 16:9 band in the middle of the phone (the rest black)
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -71,8 +81,73 @@ public class CrashActivity extends SDLActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        note("Actividad en primer plano");
         hideSystemBars();
         hideSoon();
+    }
+
+    @Override
+    protected void onPause() {
+        note("Actividad en segundo plano");
+        super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        note("Actividad destruida");
+        super.onDestroy();
+    }
+
+    @Override
+    public void onTrimMemory(int level) {
+        super.onTrimMemory(level);
+        note("Memoria: el sistema pide liberar (nivel " + level + ")");
+    }
+
+    /**
+     * The log, in the app's private folder (files/settings/log.txt): this part's lines and the game's own (stdout and stderr
+     * go to the same file, from the game's start). A new process rotates the last log to log.previous.txt. The log never
+     * stops the app: a write that fails is dropped.
+     */
+    private void startLog() {
+        File dir = new File(getFilesDir(), "settings");
+        dir.mkdirs();
+        if (!logStarted) {
+            logStarted = true;
+            File last = new File(dir, "log.txt");
+            if (last.exists()) {
+                last.renameTo(new File(dir, "log.previous.txt"));
+            }
+            note("=== Proceso nuevo ===");
+            DisplayMetrics metrics = getResources().getDisplayMetrics();
+            float refresh = getWindowManager().getDefaultDisplay().getRefreshRate();
+            note("Dispositivo: " + Build.MANUFACTURER + " " + Build.MODEL + " (" + Build.HARDWARE + "), Android "
+                    + Build.VERSION.RELEASE + ", API " + Build.VERSION.SDK_INT);
+            note("Pantalla: " + metrics.widthPixels + "x" + metrics.heightPixels + " px, " + metrics.densityDpi
+                    + " dpi, " + refresh + " Hz");
+            note("Procesadores: " + Runtime.getRuntime().availableProcessors() + ", memoria máxima de la app: "
+                    + (Runtime.getRuntime().maxMemory() >> 20) + " MB");
+            ActivityManager activities = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+            ActivityManager.MemoryInfo memory = new ActivityManager.MemoryInfo();
+            activities.getMemoryInfo(memory);
+            note("Memoria del teléfono: " + (memory.availMem >> 20) + " MB libres de " + (memory.totalMem >> 20)
+                    + " MB" + (memory.lowMemory ? " (memoria baja)" : ""));
+        }
+        note("Actividad creada");
+    }
+
+    /** One line in the log, with the time. Synchronized: the disc copy writes from its own thread. */
+    private synchronized void note(String text) {
+        try {
+            File dir = new File(getFilesDir(), "settings");
+            dir.mkdirs();
+            String line = new SimpleDateFormat("HH:mm:ss.SSS", Locale.US).format(new Date()) + " [java] " + text + "\n";
+            try (FileOutputStream out = new FileOutputStream(new File(dir, "log.txt"), true)) {
+                out.write(line.getBytes(StandardCharsets.UTF_8));
+            }
+        } catch (IOException | RuntimeException ignored) {
+            // the log is a help, not a need
+        }
     }
 
     /**
@@ -114,6 +189,7 @@ public class CrashActivity extends SDLActivity {
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
+        note("Ventana con foco: " + hasFocus);
         if (hasFocus) {
             hideSystemBars();
             hideSoon();
@@ -151,7 +227,9 @@ public class CrashActivity extends SDLActivity {
             File target = discFile();
             target.getParentFile().mkdirs();
             File partial = new File(target.getParentFile(), "disc.iso.part");
+            note("Importando el disco elegido");
             final String problem = copyTo(uri, partial);
+            note(problem == null ? "Disco copiado" : "Disco no copiado: " + problem);
             if (problem == null && partial.renameTo(target)) {
                 getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean(KEY_COPIED, true).apply();
                 main.post(() -> {
@@ -229,6 +307,7 @@ public class CrashActivity extends SDLActivity {
     }
 
     private void handOverPaths() {
+        note("Entregando al juego la ruta del disco y de los ajustes");
         NativeBridge.setPaths(discFile().getAbsolutePath(), new File(getFilesDir(), "settings").getAbsolutePath());
     }
 

@@ -47,11 +47,31 @@ void SetEnvironment(const char* name, const char* value);
 #if defined(_WIN32)
 void GameFrameDone();
 void StartHangWatch();
+#elif defined(__ANDROID__)
+// Android: the frame times and the stall watch are the Android log's (androidlog.cpp)
+void GameFrameDone();
+inline void StartHangWatch()
+{
+}
 #else
 inline void GameFrameDone()
 {
 }
 inline void StartHangWatch()
+{
+}
+#endif
+
+// The Android log file (androidlog.cpp): stdout and stderr go to the settings folder's log.txt, and each picture shown is counted
+// with the GS's primitives drawn so far (a picture with nothing drawn since the last is a black one)
+#if defined(__ANDROID__)
+void StartAndroidLog();
+void AndroidPresented(u64 primitives);
+#else
+inline void StartAndroidLog()
+{
+}
+inline void AndroidPresented(u64)
 {
 }
 #endif

@@ -78,8 +78,3 @@ repite cuadros; se veía a tirones). Sigue en 21:9. touch/touchpad.{h,cpp} y pad
 CrashActivity.java: pantalla completa con WindowInsetsController en Android 11+ (barras ocultas, vuelven solo con un deslizamiento
 del borde y se ocultan otra vez); los botones de volumen cambian el volumen sin el panel del sistema (flags 0).
 Sin compilar ni probar en el Poco todavía.
-
-v22 (fps y barras, sin compilar): TouchOverlay.java: el overlay ya no se redibuja en cada vblank (postInvalidateOnAnimation desde onDraw); solo al tocar, al editar o cuando el juego entra o sale de partida, que se mira cada 250 ms. CrashActivity.java: las barras se vuelven a ocultar 500 ms después de onResume y del foco, por si SDL aplica sus banderas después.
-Pendiente para el FPS: medir en el Poco con TWIN_FRAME_STATS (hoy solo se activa con variable de entorno, en Android no hay forma de ponerla).
-
-v23 (orientación): CrashActivity.java fuerza la pantalla en horizontal (SENSOR_LANDSCAPE). Una grabación de la v22 mostró el juego en vertical: la imagen ocupaba una franja de 16:9 en el centro y el resto quedaba negro. Medido en la grabación: ~5 cuadros distintos por segundo en la escena animada y ningún cambio durante la carga (2–8 s) y el título fijo (12–15 s); la pantalla negra empieza a los 24 s. Pendiente: logcat ("graphics:" y "shader:") para la pantalla negra.

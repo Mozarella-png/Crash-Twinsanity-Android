@@ -36,6 +36,14 @@ struct OptionInfo
 // The phone's start values: 60 Hz (the game steps 60 times a second; 120 would repeat frames and judder), and the 21:9
 // widescreen (the picture takes the screen's shape, fixes.cpp). The computer keeps 60 Hz and 16:9.
 constexpr s32 DefaultRefresh60 = 1;
+// Performance on the phone: no texture packs' replacements and a still options backdrop by default (the computer keeps both)
+#if defined(__ANDROID__)
+constexpr s32 DefaultTexturePack = 0;
+constexpr s32 DefaultAnimatedBackdrop = 0;
+#else
+constexpr s32 DefaultTexturePack = 1;
+constexpr s32 DefaultAnimatedBackdrop = 1;
+#endif
 #if defined(__ANDROID__)
 constexpr s32 DefaultUltrawide = 1;
 #else
@@ -56,7 +64,7 @@ constexpr OptionInfo Infos[OptionCount] = {
     {OptionController, "controller", 0, 4},
     {OptionMouse, "mouse", 1, 1},
     {OptionTextureUpscale, "texture_upscale", 0, 2},
-    {OptionTexturePack, "texture_pack", 1, 1},
+    {OptionTexturePack, "texture_pack", DefaultTexturePack, 1},
     {OptionAntiAliasing, "anti_aliasing", 0, 1},
     {OptionVSync, "vsync", 1, 1},
     {OptionMusicVolume, "music_volume", 10, 10},
@@ -76,6 +84,7 @@ constexpr OptionInfo Infos[OptionCount] = {
     {OptionLanguage, "language", 0, 5},
     {OptionDetailedLog, "detailed_log", 0, 1},
     {OptionMenuHints, "menu_hints", 0, 1},
+    {OptionAnimatedBackdrop, "animated_backdrop", DefaultAnimatedBackdrop, 1},
 };
 
 s32 g_Values[OptionCount];

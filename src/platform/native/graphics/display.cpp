@@ -1121,6 +1121,10 @@ void ShowFrameHere();
 void ShowFrame()
 {
     NoteWindowSize();
+#if defined(__ANDROID__)
+    // The Android log's count of the pictures shown (and the ones with nothing drawn since the last)
+    Native::AndroidPresented(GetHardware().gs->primitivesDrawn);
+#endif
     if (!RenderThreadActive())
     {
         ShowFrameHere();

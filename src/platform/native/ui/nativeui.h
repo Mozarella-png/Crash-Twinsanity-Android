@@ -118,6 +118,7 @@ enum NativeText : u32
     TextTexturePack,
     TextAntiAliasing,
     TextVSync,
+    TextAnimatedBackdrop,
     TextColumnAction,
     TextColumnKey,
     TextColumnKey2,
@@ -142,6 +143,7 @@ enum NativeText : u32
     TextDescTexturePack,
     TextDescAntiAliasing,
     TextDescVSync,
+    TextDescAnimatedBackdrop,
     TextDescCrt,
     TextDescRefreshRate,
     TextDescGameLanguage,
@@ -349,6 +351,9 @@ enum Option : u32
     OptionDetailedLog,
     // The game's menus' button hints: the game's own (0: OLEG's labels, their glyphs the controller's) or the native bar (1)
     OptionMenuHints,
+    // The options screen's animated backdrop (the spiral turning behind the menus): on by default off the phone; off it's
+    // drawn still, which costs the GPU far less per frame
+    OptionAnimatedBackdrop,
     OptionCount,
 };
 

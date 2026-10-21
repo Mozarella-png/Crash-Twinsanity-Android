@@ -160,6 +160,12 @@ void SetUpLog()
 
 int main(int argc, char** argv)
 {
+#if defined(__ANDROID__)
+    // The log file first, so that everything after it is kept (androidlog.cpp)
+    Native::StartAndroidLog();
+    // Diagnostic build: the renderer's pass counts go to logcat every 60 frames (hwgs.cpp, Pass)
+    setenv("TWIN_HW_STATS", "1", 1);
+#endif
 #if defined(_WIN32)
     SetUpLog();
     Native::StartProfiler();
