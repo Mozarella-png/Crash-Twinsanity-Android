@@ -2,6 +2,7 @@ package com.giopixel.crashtwinsanity;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.media.AudioManager;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -48,6 +49,8 @@ public class CrashActivity extends SDLActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // The game is a landscape TV: held upright, its picture was a 16:9 band in the middle of the phone (the rest black)
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         if (android.os.Build.VERSION.SDK_INT >= 28) {
             // The game draws into the notch's area too: the screen is the whole of it
