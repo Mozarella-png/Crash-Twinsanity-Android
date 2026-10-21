@@ -23,6 +23,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 // ---------------------------------------------------------------------------------------------------------- settings and log
@@ -341,6 +342,26 @@ void Native::OpenDiscImage()
     const char* given = GetSettings().discImage;
     std::string image = given != nullptr ? given : "";
     bool askable = given == nullptr || g_DiscImageRemembered;
+#if defined(__ANDROID__)
+    // Android: the activity copies the player's disc into the app's folder and gives that path here (android_glue.cpp), so
+    // the game waits for the file to appear. A remembered image (a picker's content link from before) or the file dialog are
+    // not used: the dialog can't answer on the phone, and the game would wait for it forever (a black screen).
+    if (given != nullptr && *given != '\0')
+    {
+        askable = false;
+        std::error_code error;
+        // Checked every quarter second; said in the log once, then every 20 s
+        for (int quarters = 0; !std::filesystem::exists(image, error); quarters++)
+        {
+            if (quarters % 80 == 0)
+            {
+                Log("disc: waiting for the copy of the disc at %s (%d s)", image.c_str(), quarters / 4);
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(250));
+        }
+        Log("disc: the copy is there, %s", image.c_str());
+    }
+#endif
     std::string problem;
     for (;;)
     {

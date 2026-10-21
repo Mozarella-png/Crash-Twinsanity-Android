@@ -59,8 +59,10 @@ public class CrashActivity extends SDLActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         startLog();
-        // The log's and the settings' folders for the game, before it starts (its start-up reads them)
-        NativeBridge.setPaths(null, new File(getFilesDir(), "settings").getAbsolutePath(), logDir().getAbsolutePath());
+        // The disc's path (it may not be copied yet: the game waits for it), the settings' and the log's folders, before the
+        // game starts (its start-up reads them)
+        NativeBridge.setPaths(discFile().getAbsolutePath(), new File(getFilesDir(), "settings").getAbsolutePath(),
+                logDir().getAbsolutePath());
         // The game is a landscape TV: held upright, its picture was a 16:9 band in the middle of the phone (the rest black)
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
