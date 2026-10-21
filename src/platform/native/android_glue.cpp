@@ -7,8 +7,14 @@
 #include <cstdlib>
 
 extern "C" JNIEXPORT void JNICALL Java_com_giopixel_crashtwinsanity_NativeBridge_setPaths(JNIEnv* env, jclass, jstring disc,
-                                                                                         jstring settings)
+                                                                                         jstring settings, jstring log)
 {
+    if (log != nullptr)
+    {
+        const char* text = env->GetStringUTFChars(log, nullptr);
+        setenv("TWIN_LOG_DIR", text, 1);
+        env->ReleaseStringUTFChars(log, text);
+    }
     if (disc != nullptr)
     {
         const char* text = env->GetStringUTFChars(disc, nullptr);

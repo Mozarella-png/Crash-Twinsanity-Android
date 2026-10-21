@@ -1,7 +1,7 @@
-// The Android build's log file: stdout and stderr go to <settings folder>/log.txt instead of logcat (which the phone doesn't
-// keep). The app's settings folder is files/settings in the app's private folder: on a debug build Android Studio's Device
-// File Explorer shows it as data/data/com.giopixel.crashtwinsanity/files/settings/log.txt. CrashActivity.java writes its own
-// lines (the device, the activity's life, the disc import) to the same file.
+// The Android build's log file: stdout and stderr go to log.txt in the app's folder on the phone's storage
+// (Android/data/com.giopixel.crashtwinsanity/files/, given by CrashActivity as TWIN_LOG_DIR) instead of logcat, which the
+// phone doesn't keep. CrashActivity.java writes its own lines (the device, the activity's life, the disc import) to the same
+// file.
 //
 // Every second the log gets a line on the game: the frames it made (how many, the interval's average and slowest, how many
 // over 50 ms), the pictures shown and how many of them had nothing drawn since the one before (a black picture while the game
@@ -81,7 +81,12 @@ void Watch()
 
 void Native::StartAndroidLog()
 {
-    const char* dir = std::getenv("TWIN_SETTINGS_DIR");
+    // The folder the activity gave for the log (the app's folder on the phone's storage), else the settings folder's
+    const char* dir = std::getenv("TWIN_LOG_DIR");
+    if (dir == nullptr || *dir == '\0')
+    {
+        dir = std::getenv("TWIN_SETTINGS_DIR");
+    }
     if (dir == nullptr || *dir == '\0')
     {
         return;

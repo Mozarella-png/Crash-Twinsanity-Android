@@ -4,6 +4,6 @@ package com.giopixel.crashtwinsanity;
 final class NativeBridge {
     private NativeBridge() {}
 
-    /** The disc image (a copy in the app's folder) and the folder for settings and saves. */
-    static native void setPaths(String discImage, String settingsFolder);
+    /** The disc image (a copy in the app's folder, or null for none yet), the folder for settings and saves, and the log's. */
+    static native void setPaths(String discImage, String settingsFolder, String logFolder);
 }

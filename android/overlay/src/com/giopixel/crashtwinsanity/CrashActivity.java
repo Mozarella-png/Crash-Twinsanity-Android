@@ -59,6 +59,8 @@ public class CrashActivity extends SDLActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         startLog();
+        // The log's and the settings' folders for the game, before it starts (its start-up reads them)
+        NativeBridge.setPaths(null, new File(getFilesDir(), "settings").getAbsolutePath(), logDir().getAbsolutePath());
         // The game is a landscape TV: held upright, its picture was a 16:9 band in the middle of the phone (the rest black)
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -110,7 +112,7 @@ public class CrashActivity extends SDLActivity {
      * stops the app: a write that fails is dropped.
      */
     private void startLog() {
-        File dir = new File(getFilesDir(), "settings");
+        File dir = logDir();
         dir.mkdirs();
         if (!logStarted) {
             logStarted = true;
@@ -136,13 +138,22 @@ public class CrashActivity extends SDLActivity {
         note("Actividad creada");
     }
 
+    /**
+     * The folder of the log: the app's folder on the phone's storage, Android/data/com.giopixel.crashtwinsanity/files, which
+     * a file manager or a USB connection shows (the private folder doesn't). The private one when there's no such storage.
+     */
+    private File logDir() {
+        File external = getExternalFilesDir(null);
+        File dir = external != null ? external : new File(getFilesDir(), "settings");
+        dir.mkdirs();
+        return dir;
+    }
+
     /** One line in the log, with the time. Synchronized: the disc copy writes from its own thread. */
     private synchronized void note(String text) {
         try {
-            File dir = new File(getFilesDir(), "settings");
-            dir.mkdirs();
             String line = new SimpleDateFormat("HH:mm:ss.SSS", Locale.US).format(new Date()) + " [java] " + text + "\n";
-            try (FileOutputStream out = new FileOutputStream(new File(dir, "log.txt"), true)) {
+            try (FileOutputStream out = new FileOutputStream(new File(logDir(), "log.txt"), true)) {
                 out.write(line.getBytes(StandardCharsets.UTF_8));
             }
         } catch (IOException | RuntimeException ignored) {
@@ -308,7 +319,8 @@ public class CrashActivity extends SDLActivity {
 
     private void handOverPaths() {
         note("Entregando al juego la ruta del disco y de los ajustes");
-        NativeBridge.setPaths(discFile().getAbsolutePath(), new File(getFilesDir(), "settings").getAbsolutePath());
+        NativeBridge.setPaths(discFile().getAbsolutePath(), new File(getFilesDir(), "settings").getAbsolutePath(),
+                logDir().getAbsolutePath());
     }
 
     /**
