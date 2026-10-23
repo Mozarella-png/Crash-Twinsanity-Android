@@ -4,6 +4,7 @@
 // (stb_truetype), the options' backdrop worked out per pixel (its gradient, the ring target, the Twinsanity spiral of
 // native/design/options/spiral_grey.svg: two Archimedean arms r = 10 + 35.45 theta over 2.2 turns), images
 #include "../graphics/hw/glsl.h"
+#include "ui/nativeui.h"
 #include "ui/overlayinternal.h"
 
 #include "graphics/presenter.h"
