@@ -5,6 +5,7 @@
 #include "ui/nativeui.h"
 
 #include "native.h"
+#include "touch/touchpad.h"
 
 #include "game/chunkdata.h"
 #include "game/gamecontroller.h"
@@ -90,6 +91,17 @@ void NativeUi::TrailFrame()
     if (state != lastState)
     {
         Native::Log("game: %s (state %u)%s", StateName(state), state, Where(player).c_str());
+#if defined(__ANDROID__)
+        // Android: a tap while the logos play presses Start (and skips them), and the menus after that run fast. The same press
+        // is made here once, at the first logo (states 4 and 5), for the player who doesn't tap
+        static bool startedAtLogo = false;
+        if (!startedAtLogo && (state == 4 || state == 5))
+        {
+            startedAtLogo = true;
+            Touch::PressStart();
+            Native::Log("touch: Start pressed at the logo, as a tap does");
+        }
+#endif
         if (state == GameController::StateLoadingLevel && controller->progress.startChunk.string != nullptr)
         {
             Native::Log("game: loading at %s", controller->progress.startChunk.string);
