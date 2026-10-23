@@ -373,6 +373,8 @@ struct Atlas
 {
     GLuint texture = 0;
     s32 size = 0;
+    // The packing failed at every size: stay empty instead of repacking on every draw (the menus' slowdown and freeze)
+    bool failed = false;
     std::vector<stbtt_packedchar> latin;
     std::vector<stbtt_packedchar> punctuation;
     std::vector<stbtt_packedchar> extras;
@@ -552,7 +554,7 @@ void DrawBox(Renderer& r, f32 x, f32 y, f32 w, f32 h, f32 radius, const Rgba32& 
 Atlas& AtlasFor(Renderer& r, OverlayFont face, s32 pixelSize)
 {
     Atlas& atlas = r.atlases[{static_cast<u32>(face), pixelSize}];
-    if (atlas.texture != 0)
+    if (atlas.texture != 0 || atlas.failed)
     {
         return atlas;
     }
@@ -560,6 +562,8 @@ Atlas& AtlasFor(Renderer& r, OverlayFont face, s32 pixelSize)
     const stbtt_fontinfo* info = OverlayFontInfo(face);
     if (info == nullptr)
     {
+        atlas.failed = true;
+        Native::Log("overlay: atlas face %u has no font data", static_cast<u32>(face));
         return atlas;
     }
 
@@ -572,7 +576,11 @@ Atlas& AtlasFor(Renderer& r, OverlayFont face, s32 pixelSize)
             continue;
         }
 
-        stbtt_PackSetOversampling(&pack, 2, 2);
+        // Oversampling only for small sizes: at 64 px and up it fills the 4096 atlas and the packing fails
+        if (pixelSize < 64)
+        {
+            stbtt_PackSetOversampling(&pack, 2, 2);
+        }
         atlas.latin.assign(LatinCount, {});
         atlas.punctuation.assign(PunctuationCount, {});
         atlas.extras.assign(ExtraCount, {});
@@ -605,7 +613,15 @@ Atlas& AtlasFor(Renderer& r, OverlayFont face, s32 pixelSize)
         gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         atlas.size = size;
+        Native::Log("overlay: atlas face %u, %d px, %d x %d", static_cast<u32>(face), pixelSize, size, size);
         break;
+    }
+
+    if (atlas.texture == 0)
+    {
+        atlas.failed = true;
+        Native::Log("overlay: atlas face %u, %d px, failed at every size (text is not drawn at this size)",
+                    static_cast<u32>(face), pixelSize);
     }
 
     return atlas;
