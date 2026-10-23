@@ -838,6 +838,7 @@ void Close()
     }
 
     g_Open = false;
+    Native::Log("menu: options closed");
     g_Capturing = false;
     GameController* controller = G_GameController;
     OLEG& oleg = controller->oleg;
@@ -850,6 +851,7 @@ void OpenScreenPosition()
 {
     // The game's own screen position page (its back comes here again: ScreenPositionClosed)
     g_Open = false;
+    Native::Log("menu: screen position page opened");
     g_ScreenPosition = true;
     GameController* controller = G_GameController;
     OLEG& oleg = controller->oleg;
@@ -1295,6 +1297,7 @@ void OpenSettings()
     }
 
     g_Open = true;
+    Native::Log("menu: options opened");
     g_Actions = 0;
     g_Capturing = false;
     g_Regions.clear();
