@@ -1254,6 +1254,8 @@ private:
     std::map<std::tuple<u32, u32>, std::pair<GLuint, GLuint>> copies_;
     BatchKey key_ = {};
     bool batching_ = false;
+    // The shader-blend copies made since the last picture shown (see AddPrimitive's budget)
+    u32 copiesThisPicture_ = 0;
     // The last primitive drawn the whole way, for the next to be drawn the same way while nothing it depended on has changed:
     // the GS's state (its registers' generation, the CLUT), the targets (their list's changes), the settings, and the texture
     // DecodeOnGpu found (good as it was). Its key is the batch's (key_)
@@ -4511,7 +4513,15 @@ bool HwGs::DrawLikeLast(const Gs::Gs::DrawState& state, const Gs::Vertex* vertex
 void HwGs::AddPrimitive(const Gs::Gs::DrawState& state, const Gs::Vertex* vertexes, const Rect& rect, Target* colour, Target* depth,
                         s32 n, bool shaderBlend, const Gs::PageSet& drawnPages, const Gs::PageSet& depthPages)
 {
-    if (batching_ && shaderBlend)
+    // Android: a picture's shader-blend copies are budgeted. Past the budget, overlapping primitives stay in one batch (they
+    // read the copy from before the batch, so they may blend slightly off) instead of each costing a full copy; a new scene
+    // start once made tens of thousands of copies a picture and froze the game
+#if defined(__ANDROID__)
+    constexpr u32 CopyBudget = 3000;
+#else
+    constexpr u32 CopyBudget = 0xFFFFFFFFu;
+#endif
+    if (batching_ && shaderBlend && copiesThisPicture_ < CopyBudget)
     {
         for (const Rect& earlier : batchRects_)
         {
@@ -4720,6 +4730,7 @@ void HwGs::Flush()
         bool regional = (k.program & BitShaderBlend) && !k.stencilDate && region.right >= region.left;
         destination = CopyTarget(k.colour, regional ? &region : nullptr);
         stats.copies++;
+        copiesThisPicture_++;
         static const bool counting = std::getenv("TWIN_HW_STATS") != nullptr;
         if (counting)
         {
@@ -5368,6 +5379,7 @@ bool HwGs::ReadDisplay(Gs::DisplayImage& image)
 
 bool HwGs::CopyDisplay(u32 slot, GLsync drawn, NativeGraphics::ShownTexture* shown)
 {
+    copiesThisPicture_ = 0;
     NativeGraphics::DisplayTexture display;
     Target* target = nullptr;
     Rect rect;
