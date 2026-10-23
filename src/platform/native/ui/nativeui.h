@@ -225,6 +225,8 @@ enum NativeText : u32
     TextDescMenuHints,
     TextHintsOriginal,
     TextHintsBar,
+    TextShowFps,
+    TextDescShowFps,
     NativeTextEnd,
 };
 
@@ -354,6 +356,8 @@ enum Option : u32
     // The options screen's animated backdrop (the spiral turning behind the menus): on by default off the phone; off it's
     // drawn still, which costs the GPU far less per frame
     OptionAnimatedBackdrop,
+    // The frames per second in the window's top left corner (fpscounter.cpp), off by default
+    OptionShowFps,
     OptionCount,
 };
 
@@ -367,6 +371,10 @@ void TrailFrame();
 void SetOption(Option option, s32 value);
 // Applies what an option changes once it's set, and every option's start-up effect (features.cpp)
 void ApplyOption(Option option);
+// The FPS counter (fpscounter.cpp): shown or not, the pictures counted, and its value (-1 none yet)
+void SetFpsCounterShown(bool shown);
+void CountShownFrame(double seconds);
+s32 FpsCounterValue();
 void ApplyStartOptions();
 void ApplyGameSettingsOnce();
 // The options read and the window's events watched (from Main, once the window is there), and the work between the game's frames

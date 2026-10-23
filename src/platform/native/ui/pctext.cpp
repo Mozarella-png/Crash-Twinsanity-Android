@@ -628,6 +628,8 @@ const NativeTextLine g_NativeTexts[] = {
     {TextDescInvertMouseY, {"moving the mouse up looks down.", "souris vers le haut : la caméra baisse.", "maus hoch blickt nach unten.", "ratón arriba mira hacia abajo.", "mouse in alto guarda in basso."}},
     {TextFxaa, {"fxaa", "fxaa", "fxaa", "fxaa", "fxaa"}},
     {TextMenuHints, {"menu hints", "aides des menus", "menühinweise", "ayudas de menú", "suggerimenti menu"}},
+    {TextShowFps, {"show fps", "afficher les fps", "fps anzeigen", "mostrar fps", "mostra fps"}},
+    {TextDescShowFps, {"a frames per second counter in the top left corner.", "un compteur d'images par seconde en haut à gauche.", "ein bilder-pro-sekunde-zähler oben links.", "un contador de imágenes por segundo arriba a la izquierda.", "un contatore di fotogrammi al secondo in alto a sinistra."}},
     {TextDescMenuHints, {"the menus' button hints: the game's own, or a bar at the bottom.", "les aides des boutons : celles du jeu, ou une barre en bas.", "die tastenhinweise: die des spiels oder eine leiste unten.", "las ayudas de botones: las del juego o una barra abajo.", "i suggerimenti dei tasti: quelli del gioco o una barra in basso."}},
     {TextHintsOriginal, {"original", "originales", "original", "originales", "originali"}},
     {TextHintsBar, {"bar", "barre", "leiste", "barra", "barra"}},

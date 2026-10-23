@@ -85,6 +85,7 @@ constexpr OptionInfo Infos[OptionCount] = {
     {OptionDetailedLog, "detailed_log", 0, 1},
     {OptionMenuHints, "menu_hints", 0, 1},
     {OptionAnimatedBackdrop, "animated_backdrop", DefaultAnimatedBackdrop, 1},
+    {OptionShowFps, "show_fps", 0, 1},
 };
 
 s32 g_Values[OptionCount];

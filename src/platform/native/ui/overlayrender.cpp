@@ -12,6 +12,7 @@
 #include <SDL3/SDL.h>
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstddef>
 #include <cstring>
@@ -869,7 +870,10 @@ void DrawFrame(const std::vector<OverlayFrame::Command>& commands, int pixelWidt
 void OverlayHook(int pixelWidth, int pixelHeight, float pixelScale)
 {
     NoteWindow(pixelWidth, pixelHeight, pixelScale);
-    DrawFrame(SubmittedFrame(), pixelWidth, pixelHeight);
+    CountShownFrame(std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count());
+    std::vector<OverlayFrame::Command> commands = SubmittedFrame();
+    AddFpsCounter(&commands, pixelWidth, pixelHeight);
+    DrawFrame(commands, pixelWidth, pixelHeight);
 }
 }
 

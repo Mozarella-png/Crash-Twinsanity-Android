@@ -44,6 +44,8 @@ std::u32string GameTextCodepoints(const std::string& gameText);
 std::vector<OverlayFrame::Command> SubmittedFrame();
 void NoteWindow(int pixelWidth, int pixelHeight, float pixelScale);
 void ReferenceMapping(f32 pixelWidth, f32 pixelHeight, f32* scale, f32* offsetX, f32* offsetY);
+// The FPS counter's box and text, added to the frame's commands (fpscounter.cpp)
+void AddFpsCounter(std::vector<OverlayFrame::Command>* commands, int pixelWidth, int pixelHeight);
 // The cursor's art: the Xbox disc's Wumpa fruit (RGBA, red the low byte), none without the disc
 bool CursorArt(std::vector<u32>* pixels, s32* width, s32* height);
 // An image's art (the cursor's, the Xbox's and the Switch's buttons from the disc); none: the overlay draws it
