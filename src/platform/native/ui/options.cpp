@@ -40,9 +40,12 @@ constexpr s32 DefaultRefresh60 = 1;
 #if defined(__ANDROID__)
 constexpr s32 DefaultTexturePack = 0;
 constexpr s32 DefaultAnimatedBackdrop = 0;
+// The FPS counter is on by default on the phone while the Options screen is black (it can't be turned on there)
+constexpr s32 DefaultShowFps = 1;
 #else
 constexpr s32 DefaultTexturePack = 1;
 constexpr s32 DefaultAnimatedBackdrop = 1;
+constexpr s32 DefaultShowFps = 0;
 #endif
 #if defined(__ANDROID__)
 constexpr s32 DefaultUltrawide = 1;
@@ -85,7 +88,7 @@ constexpr OptionInfo Infos[OptionCount] = {
     {OptionDetailedLog, "detailed_log", 0, 1},
     {OptionMenuHints, "menu_hints", 0, 1},
     {OptionAnimatedBackdrop, "animated_backdrop", DefaultAnimatedBackdrop, 1},
-    {OptionShowFps, "show_fps", 0, 1},
+    {OptionShowFps, "show_fps", DefaultShowFps, 1},
 };
 
 s32 g_Values[OptionCount];

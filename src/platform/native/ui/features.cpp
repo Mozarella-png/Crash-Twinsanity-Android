@@ -100,6 +100,7 @@ void ApplyStartOptions()
     ApplyOption(OptionTexturePack);
     ApplyOption(OptionAntiAliasing);
     ApplyOption(OptionVSync);
+    ApplyOption(OptionShowFps);
     ApplyVolumes();
 }
 
