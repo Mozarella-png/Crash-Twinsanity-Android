@@ -820,6 +820,13 @@ void DrawFrame(const std::vector<OverlayFrame::Command>& commands, int pixelWidt
         {
         case CommandKind::Backdrop:
         {
+            if (command.seconds < 0.0f)
+            {
+                // The still backdrop (the Android default): a plain gradient box. The shader below turned the Options screen
+                // black on the phone, so the still one no longer goes through it.
+                DrawBox(r, 0.0f, 0.0f, r.width, r.height, 0.0f, Hex(0x0e5fb8), Hex(0x071f45), 0.0f, Rgba32{0, 0, 0, -1}, 0.0f);
+                break;
+            }
             gl.Uniform1i(Uniform(r, "mode"), 2);
             gl.Uniform1f(Uniform(r, "scale"), r.scale);
             gl.Uniform2f(Uniform(r, "offset"), r.offsetX, r.offsetY);
