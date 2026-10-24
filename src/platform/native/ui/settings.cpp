@@ -235,7 +235,6 @@ void Build()
     display.push_back(OptionChoice(TextFiltering, TextDescFiltering, OptionTextureFilter, {TextSharp, TextSmooth}));
     display.push_back(Toggle(TextCrt, TextDescCrt, OptionCrtFilter));
     display.push_back(Toggle(TextTexturePack, TextDescTexturePack, OptionTexturePack));
-    display.push_back(Toggle(TextShowFps, TextDescShowFps, OptionShowFps));
     // (The texture upscale isn't shown until the graphics have it: NativeGraphicsSetTextureUpscale takes only off.) The
     // anti-aliasing is FXAA on the shown picture; there's no MSAA: PCSX2 dropped its own, and the render scale is the
     // supersampling
@@ -839,7 +838,6 @@ void Close()
     }
 
     g_Open = false;
-    Native::Log("menu: options closed");
     g_Capturing = false;
     GameController* controller = G_GameController;
     OLEG& oleg = controller->oleg;
@@ -852,7 +850,6 @@ void OpenScreenPosition()
 {
     // The game's own screen position page (its back comes here again: ScreenPositionClosed)
     g_Open = false;
-    Native::Log("menu: screen position page opened");
     g_ScreenPosition = true;
     GameController* controller = G_GameController;
     OLEG& oleg = controller->oleg;
@@ -1298,7 +1295,6 @@ void OpenSettings()
     }
 
     g_Open = true;
-    Native::Log("menu: options opened");
     g_Actions = 0;
     g_Capturing = false;
     g_Regions.clear();

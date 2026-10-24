@@ -4,7 +4,6 @@
 // (stb_truetype), the options' backdrop worked out per pixel (its gradient, the ring target, the Twinsanity spiral of
 // native/design/options/spiral_grey.svg: two Archimedean arms r = 10 + 35.45 theta over 2.2 turns), images
 #include "../graphics/hw/glsl.h"
-#include "ui/nativeui.h"
 #include "ui/overlayinternal.h"
 
 #include "graphics/presenter.h"
@@ -13,7 +12,6 @@
 #include <SDL3/SDL.h>
 
 #include <algorithm>
-#include <chrono>
 #include <cmath>
 #include <cstddef>
 #include <cstring>
@@ -375,8 +373,6 @@ struct Atlas
 {
     GLuint texture = 0;
     s32 size = 0;
-    // The packing failed at every size: stay empty instead of repacking on every draw (the menus' slowdown and freeze)
-    bool failed = false;
     std::vector<stbtt_packedchar> latin;
     std::vector<stbtt_packedchar> punctuation;
     std::vector<stbtt_packedchar> extras;
@@ -556,7 +552,7 @@ void DrawBox(Renderer& r, f32 x, f32 y, f32 w, f32 h, f32 radius, const Rgba32& 
 Atlas& AtlasFor(Renderer& r, OverlayFont face, s32 pixelSize)
 {
     Atlas& atlas = r.atlases[{static_cast<u32>(face), pixelSize}];
-    if (atlas.texture != 0 || atlas.failed)
+    if (atlas.texture != 0)
     {
         return atlas;
     }
@@ -564,8 +560,6 @@ Atlas& AtlasFor(Renderer& r, OverlayFont face, s32 pixelSize)
     const stbtt_fontinfo* info = OverlayFontInfo(face);
     if (info == nullptr)
     {
-        atlas.failed = true;
-        Native::Log("overlay: atlas face %u has no font data", static_cast<u32>(face));
         return atlas;
     }
 
@@ -578,11 +572,7 @@ Atlas& AtlasFor(Renderer& r, OverlayFont face, s32 pixelSize)
             continue;
         }
 
-        // Oversampling only for small sizes: at 64 px and up it fills the 4096 atlas and the packing fails
-        if (pixelSize < 64)
-        {
-            stbtt_PackSetOversampling(&pack, 2, 2);
-        }
+        stbtt_PackSetOversampling(&pack, 2, 2);
         atlas.latin.assign(LatinCount, {});
         atlas.punctuation.assign(PunctuationCount, {});
         atlas.extras.assign(ExtraCount, {});
@@ -615,15 +605,7 @@ Atlas& AtlasFor(Renderer& r, OverlayFont face, s32 pixelSize)
         gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         atlas.size = size;
-        Native::Log("overlay: atlas face %u, %d px, %d x %d", static_cast<u32>(face), pixelSize, size, size);
         break;
-    }
-
-    if (atlas.texture == 0)
-    {
-        atlas.failed = true;
-        Native::Log("overlay: atlas face %u, %d px, failed at every size (text is not drawn at this size)",
-                    static_cast<u32>(face), pixelSize);
     }
 
     return atlas;
@@ -822,13 +804,6 @@ void DrawFrame(const std::vector<OverlayFrame::Command>& commands, int pixelWidt
         {
         case CommandKind::Backdrop:
         {
-            if (command.seconds < 0.0f)
-            {
-                // The still backdrop (the Android default): a plain gradient box. The shader below turned the Options screen
-                // black on the phone, so the still one no longer goes through it.
-                DrawBox(r, 0.0f, 0.0f, r.width, r.height, 0.0f, Hex(0x0e5fb8), Hex(0x071f45), 0.0f, Rgba32{0, 0, 0, -1}, 0.0f);
-                break;
-            }
             gl.Uniform1i(Uniform(r, "mode"), 2);
             gl.Uniform1f(Uniform(r, "scale"), r.scale);
             gl.Uniform2f(Uniform(r, "offset"), r.offsetX, r.offsetY);
@@ -871,10 +846,7 @@ void DrawFrame(const std::vector<OverlayFrame::Command>& commands, int pixelWidt
 void OverlayHook(int pixelWidth, int pixelHeight, float pixelScale)
 {
     NoteWindow(pixelWidth, pixelHeight, pixelScale);
-    CountShownFrame(std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count());
-    std::vector<OverlayFrame::Command> commands = SubmittedFrame();
-    AddFpsCounter(&commands, pixelWidth, pixelHeight);
-    DrawFrame(commands, pixelWidth, pixelHeight);
+    DrawFrame(SubmittedFrame(), pixelWidth, pixelHeight);
 }
 }
 

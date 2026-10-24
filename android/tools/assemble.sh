@@ -23,9 +23,11 @@ cp "$ROOT"/android/overlay/src/com/giopixel/crashtwinsanity/*.java "$JAVA_DIR/"
 mkdir -p "$APP/src/main/assets/touch"
 cp "$ROOT"/android/overlay/assets/touch/* "$APP/src/main/assets/touch/"
 
-# The game's fonts (the text of its menus, native/third_party/fonts): copied by CrashActivity.installFonts
+# The menus' fonts (overlay.cpp reads them from the assets on Android): without them the options screen has no text
 mkdir -p "$APP/src/main/assets/fonts"
 cp "$ROOT"/native/third_party/fonts/*.ttf "$APP/src/main/assets/fonts/"
+ls "$APP/src/main/assets/fonts/LuckiestGuy-Regular.ttf" "$APP/src/main/assets/fonts/Fredoka-SemiBold.ttf" \
+   "$APP/src/main/assets/fonts/Fredoka-Bold.ttf" >/dev/null || { echo "the menus' fonts weren't copied" >&2; exit 1; }
 
 # Package, launcher activity and name. The template writes the namespace as `namespace "org.libsdl.app"` (3.2) or
 # `namespace = "org.libsdl.app"` (3.4), so both spellings are matched.

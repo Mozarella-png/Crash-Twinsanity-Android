@@ -428,24 +428,6 @@ void PresentTexture(GLuint texture, f32 u0, f32 v0, f32 u1, f32 v1, u32 pictureW
         g_Overlay(width, height, points > 0 ? static_cast<f32>(width) / static_cast<f32>(points) : 1.0f);
     }
 
-    // Diagnostic (log only): once every 60 frames, the brightness of a 4x4 block at the centre of what is shown
-    {
-        static u32 framesSeen = 0;
-        if (framesSeen++ % 60 == 0)
-        {
-            unsigned char pixels[4 * 4 * 4] = {};
-            gl.ReadPixels(static_cast<GLint>(width / 2), static_cast<GLint>(height / 2), 4, 4, GL_RGBA, GL_UNSIGNED_BYTE,
-                          pixels);
-            u32 sum = 0;
-            for (u32 i = 0; i < 16; i++)
-            {
-                sum += pixels[i * 4] + pixels[i * 4 + 1] + pixels[i * 4 + 2];
-            }
-            f32 mean = static_cast<f32>(sum) / 48.0f;
-            Native::Log("picture: centre brightness %.0f of 255, %s", mean, mean < 4.0f ? "BLACK" : "lit");
-        }
-    }
-
     WriteWindowShot(width, height);
     SDL_GL_SwapWindow(p.window);
 }

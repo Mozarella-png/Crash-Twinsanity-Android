@@ -82,9 +82,6 @@ void ApplyOption(Option option)
     case OptionController:
         ForgetPromptStyleForTest();
         break;
-    case OptionShowFps:
-        SetFpsCounterShown(IsOn(OptionShowFps));
-        break;
     default:
         break;
     }
@@ -100,7 +97,6 @@ void ApplyStartOptions()
     ApplyOption(OptionTexturePack);
     ApplyOption(OptionAntiAliasing);
     ApplyOption(OptionVSync);
-    ApplyOption(OptionShowFps);
     ApplyVolumes();
 }
 

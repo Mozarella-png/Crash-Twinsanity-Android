@@ -73,6 +73,22 @@ void LoadFonts()
     {
         FontFile& font = g_Fonts[face];
         std::string used;
+#if defined(__ANDROID__)
+        // The APK's assets (android/tools/assemble.sh copies them to assets/fonts): the desktop paths don't exist on the phone, so
+        // without this the options screen draws no text at all
+        for (const std::string& name : names[face])
+        {
+            size_t size = 0;
+            void* data = SDL_LoadFile(("fonts/" + name).c_str(), &size);
+            if (data != nullptr)
+            {
+                font.data.assign(static_cast<unsigned char*>(data), static_cast<unsigned char*>(data) + size);
+                SDL_free(data);
+                used = "asset fonts/" + name;
+                break;
+            }
+        }
+#endif
         for (const std::string& folder : folders)
         {
             for (const std::string& name : names[face])

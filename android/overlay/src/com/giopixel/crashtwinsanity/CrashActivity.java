@@ -14,7 +14,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.provider.OpenableColumns;
-import android.system.Os;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -60,7 +59,6 @@ public class CrashActivity extends SDLActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         startLog();
-        installFonts();
         // The disc's path (it may not be copied yet: the game waits for it), the settings' and the log's folders, before the
         // game starts (its start-up reads them)
         NativeBridge.setPaths(discFile().getAbsolutePath(), new File(getFilesDir(), "settings").getAbsolutePath(),
@@ -315,36 +313,6 @@ public class CrashActivity extends SDLActivity {
             // the size is only for the space check
         }
         return -1;
-    }
-
-    /**
-     * The game's fonts (the overlay's text): copied from the APK's assets (fonts/) to the app's folder, where the game looks
-     * for them (TWIN_UI_FONTS, read when the first text is drawn). Without them the menus' text is not drawn at all.
-     */
-    private void installFonts() {
-        File dir = new File(getFilesDir(), "fonts");
-        dir.mkdirs();
-        try {
-            String[] names = getAssets().list("fonts");
-            if (names == null) {
-                note("Fuentes: no hay fonts/ en el APK");
-                return;
-            }
-            for (String name : names) {
-                try (InputStream in = getAssets().open("fonts/" + name);
-                     OutputStream out = new FileOutputStream(new File(dir, name))) {
-                    byte[] buffer = new byte[65536];
-                    int count;
-                    while ((count = in.read(buffer)) > 0) {
-                        out.write(buffer, 0, count);
-                    }
-                }
-            }
-            Os.setenv("TWIN_UI_FONTS", dir.getAbsolutePath(), true);
-            note("Fuentes: " + names.length + " en " + dir.getAbsolutePath());
-        } catch (Exception e) {
-            note("Fuentes: no se pudieron copiar: " + e);
-        }
     }
 
     private static String megabytes(long bytes) {
