@@ -121,6 +121,10 @@ bool LoadGl()
     bool dual = LoadOptional(g_Gl.BindFragDataLocationIndexed, "glBindFragDataLocationIndexed");
 #endif
     Glsl::SetDualSource(dual);
+    // Said in the log, once: without it the blends the GPU can't do exactly are copied and blended in the shader (the copies that
+    // make the phone's frames slow)
+    std::fprintf(stderr, "graphics: dual-source blend %s (GL_EXT_blend_func_extended %s)\n", dual ? "on" : "off",
+                 SDL_GL_ExtensionSupported("GL_EXT_blend_func_extended") ? "present" : "absent");
     ok &= Load(g_Gl.BindAttribLocation, "glBindAttribLocation");
     ok &= Load(g_Gl.LinkProgram, "glLinkProgram");
     ok &= Load(g_Gl.GetProgramiv, "glGetProgramiv");
